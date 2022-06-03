@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('page_name', __('Create User'))
+@section('page_name', __('Shto Perdorues'))
 
 @section('custom_header')
     <link rel="stylesheet" href="{{asset('vendor/boxicons/css/boxicons.min.css')}}" />

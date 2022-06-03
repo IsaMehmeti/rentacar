@@ -13,9 +13,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
  //perdoruesit
 Auth::routes();
 
@@ -23,6 +20,14 @@ Auth::routes();
 Route::group(['middleware' => 'auth'], function(){
     Route::get('/', 'HomeController@index')->name('home');
     Route::resource('/user', 'UserController');
-
+    Route::resource('/cars', 'CarController');
+    Route::resource('/registers', 'RegisterController');
+    Route::resource('/clients', 'ClientController');
+    Route::get('/clients/{id}/registers', 'ClientController@clientRegisters')->name('client.registers');
+    Route::get('/registers/create/{client_id?}', 'RegisterController@create')->name('registers.create');
+    Route::get('/registers/download/{id}', 'RegisterController@download')->name('registers.download');
     Route::get('/logout', 'Auth\LoginController@logout');
+
+    Route::get('/test', 'RegisterController@test');
+
 });

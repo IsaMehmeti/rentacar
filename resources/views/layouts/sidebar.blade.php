@@ -20,59 +20,60 @@
                             <span>{{__('Dashboard')}}</span>
                         </a>
                     </li>
-{{--                    <li class="{{ Request::is('municipalities') ? 'nav-active' : '' }}">--}}
-{{--                        <a class="nav-link" href="{{url('/municipalities')}}">--}}
-{{--                            <i class="far fa-building"></i>--}}
-{{--                            <span>{{__('messages.Municipalities')}}</span>--}}
-{{--                        </a>--}}
-{{--                    </li>--}}
-{{--                    <li class="{{ Request::is('mail') ? 'nav-active' : '' }}">--}}
-{{--                        <a class="nav-link" href="{{url('/mail')}}">--}}
-{{--                            <i class="fas fa-envelope" aria-hidden="true"></i>--}}
-{{--                            <span>{{__('messages.Send Email')}}</span>--}}
-{{--                        </a>--}}
-{{--                    </li>--}}
-{{--                    <li class="nav-parent {{ Request::is('collegium*') ? 'nav-expanded nav-active' : '' }}">--}}
-{{--                        <a class="nav-link" href="#">--}}
-{{--                            <i class="fas fa-industry" aria-hidden="true"></i>--}}
-{{--                            <span>{{__('messages.Collegiums')}}</span>--}}
-{{--                        </a>--}}
-{{--                        <ul class="nav nav-children">--}}
-{{--                            <li class="{{ Request::is('collegium') ? 'nav-active' : '' }}">--}}
-{{--                                <a class="nav-link" href="{{route('collegium.index')}}">--}}
-{{--                                    {{__('messages.Collegiums')}}--}}
-{{--                                </a>--}}
-{{--                            </li>--}}
-{{--                            <li class="{{ Request::is('collegium/create') ? 'nav-active' : '' }}">--}}
-{{--                                <a class="nav-link" href="{{route('collegium.create')}}">--}}
-{{--                                    {{__('messages.Create Collegium')}}--}}
-{{--                                </a>--}}
-{{--                            </li>--}}
-{{--                        </ul>--}}
-{{--                    </li>--}}
-{{--                    <li class="nav-parent {{ Request::is('official*') ? 'nav-expanded nav-active' : '' }}">--}}
-{{--                        <a class="nav-link" href="#">--}}
-{{--                            <i class="fas fa-user-tie"></i>--}}
-{{--                            <span> {{__('messages.Officials')}}</span>--}}
-{{--                        </a>--}}
-{{--                        <ul class="nav nav-children">--}}
-{{--                            <li class="{{ Request::is('official') ? 'nav-active' : '' }}">--}}
-{{--                                <a class="nav-link" href="{{route('official.index')}}">--}}
-{{--                                    {{__('messages.Officials')}}--}}
-{{--                                </a>--}}
-{{--                            </li>--}}
-{{--                            <li class="{{ Request::is('official/create') ? 'nav-active' : '' }}">--}}
-{{--                                <a class="nav-link" href="{{route('official.create')}}">--}}
-{{--                                    {{__('messages.Create Official')}}--}}
-{{--                                </a>--}}
-{{--                            </li>--}}
-{{--                            <li class="{{ Request::is('official/archive') ? 'nav-active' : '' }}">--}}
-{{--                                <a class="nav-link" href="{{route('archive')}}">--}}
-{{--                                    {{__('messages.Archive')}}--}}
-{{--                                </a>--}}
-{{--                            </li>--}}
-{{--                        </ul>--}}
-{{--                    </li>--}}
+                    <li class="nav-parent {{ Request::is('registers*') ? 'nav-expanded nav-active' : '' }}">
+                        <a class="nav-link" href="#">
+                            <i class="fa fa-bookmark"></i>
+                            <span> {{__('Regjistri')}}</span>
+                        </a>
+                        <ul class="nav nav-children">
+                            <li class="{{ Request::is('registers') ? 'nav-active' : '' }}">
+                                <a class="nav-link" href="{{route('registers.index')}}">
+                                    {{__('Regjistri')}}
+                                </a>
+                            </li>
+                            <li class="{{ Request::is('registers/create') ? 'nav-active' : '' }}">
+                                <a class="nav-link" href="{{route('registers.create')}}">
+                                    {{__('Shto ne Regjister')}}
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-parent {{ Request::is('cars*') ? 'nav-expanded nav-active' : '' }}">
+                        <a class="nav-link" href="#">
+                            <i class="fa fa-car"></i>
+                            <span> {{__('Veturat')}}</span>
+                        </a>
+                        <ul class="nav nav-children">
+                            <li class="{{ Request::is('cars') ? 'nav-active' : '' }}">
+                                <a class="nav-link" href="{{route('cars.index')}}">
+                                    {{__('Veturat')}}
+                                </a>
+                            </li>
+                            <li class="{{ Request::is('cars/create') ? 'nav-active' : '' }}">
+                                <a class="nav-link" href="{{route('cars.create')}}">
+                                    {{__('Shto Veturen')}}
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-parent {{ Request::is('clients*') ? 'nav-expanded nav-active' : '' }}">
+                        <a class="nav-link" href="#">
+                            <i class="fa fa-users"></i>
+                            <span> {{__('Klientët')}}</span>
+                        </a>
+                        <ul class="nav nav-children">
+                            <li class="{{ Request::is('clients') ? 'nav-active' : '' }}">
+                                <a class="nav-link" href="{{route('clients.index')}}">
+                                    {{__('Klientët')}}
+                                </a>
+                            </li>
+                            <li class="{{ Request::is('clients/create') ? 'nav-active' : '' }}">
+                                <a class="nav-link" href="{{route('clients.create')}}">
+                                    {{__('Shto Klientin')}}
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
 {{--                    <li class="nav-parent {{ Request::is('file*') ? 'nav-expanded nav-active' : '' }}">--}}
 {{--                        <a class="nav-link" href="#">--}}
 {{--                            <i class="fab fa-google-drive"></i>--}}
@@ -94,7 +95,7 @@
                     <li class="{{ Request::is('user/create') ? 'nav-active' : '' }}">
                         <a class="nav-link" href="{{route('user.create')}}">
                             <i class="fas fa-users"></i>
-                            <span>{{__('Create User')}}</span>
+                            <span>{{__('Shto Perdorues')}}</span>
                         </a>
                     </li>
 {{--                    <li class="{{ Request::is('calendar') ? 'nav-active' : '' }}">--}}
