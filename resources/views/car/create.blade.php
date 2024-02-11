@@ -64,14 +64,12 @@
                                 <input type="text" class="form-control" name="owner" id="w1-username" value="{{ old('owner') }}">
                             </div>
                         </div>
-                        <div class="form-group row">
-                            <label class="col-sm-4 control-label text-sm-right pt-1" for="w1-password">{{__('Foto')}}</label>
-                            <div class="col-sm-8">
-                                <input type="file" class="form-control" name="file" id="w1-username">
-                            </div>
+                    <div class="form-group row">
+                        <label class="col-sm-4 control-label text-sm-right pt-1" for="w1-password">{{__('Koment')}}</label>
+                        <div class="col-sm-8">
+                            <textarea type="text" class="form-control" name="comment" id="w1-username" >{{ old('comment') }} </textarea>
                         </div>
                     </div>
-
                 </div>
 
         <div class="card-footer">

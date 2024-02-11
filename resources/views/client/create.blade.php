@@ -35,6 +35,12 @@
                             </div>
                         </div>
                         <div class="form-group row">
+                            <label class="col-sm-4 control-label text-sm-right pt-1" for="w1-password">{{__('Vendlindja')}}</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" name="birthplace" id="w1-username" value="{{ old('birthplace') }}">
+                            </div>
+                        </div>
+                        <div class="form-group row">
                             <label class="col-sm-4 control-label text-sm-right pt-1" for="w1-password">{{__('Numri i telefonit')}}</label>
                             <div class="col-sm-8">
                                 <input type="text" class="form-control" name="phone" id="w1-username" value="{{ old('phone') }}">
@@ -47,9 +53,9 @@
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label class="col-sm-4 control-label text-sm-right pt-1" for="w1-password">{{__('Numri i Pasaportes')}}</label>
+                            <label class="col-sm-4 control-label text-sm-right pt-1" for="w1-password">{{__('Nr. i Patente Shoferit')}}</label>
                             <div class="col-sm-8">
-                                <input type="text" class="form-control" name="passaport_nr" id="w1-username" value="{{ old('passaport_nr') }}">
+                                <input type="text" class="form-control" name="drivers_license_id" id="w1-username" value="{{ old('drivers_license_id') }}">
                             </div>
                         </div>
                         <div class="form-group row">

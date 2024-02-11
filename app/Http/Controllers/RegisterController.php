@@ -6,6 +6,7 @@ use App\Models\Car;
 use App\Models\Client;
 use App\Models\Register;
 use App\Services\PdfService;
+use App\Services\WordService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Facades\Image;
@@ -13,9 +14,11 @@ use Intervention\Image\Facades\Image;
 class RegisterController extends Controller
 {
     protected $pdfService;
-    public function __construct(PdfService $pdfService)
+    protected $wordService;
+    public function __construct(PdfService $pdfService, WordService $wordService)
     {
         $this->pdfService = $pdfService;
+        $this->wordService = $wordService;
     }
     /**
      * Display a listing of the resource.
@@ -43,7 +46,7 @@ class RegisterController extends Controller
      *
      * @param Request $request
      */
-    public function store(Request $request)
+    public function storeV1(Request $request)
     {
         $request->validate([
         'car_id' => 'required|exists:cars,id',
@@ -69,6 +72,45 @@ class RegisterController extends Controller
             'derivat' => $register->fuel_status,
         ]);
         return response()->download(storage_path("/files/$filename"), $filename, ['Content-Type' => 'application/jpg'])->deleteFileAfterSend(true);
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'car_id' => 'required|exists:cars,id',
+            'client_id' => 'required|exists:clients,id',
+        ]);
+        $register = Register::create($request->all());
+        $templatePath = public_path('kontrata.docx');
+        $outputPath = storage_path('files/kontrata.docx');
+
+        return $this->wordService->fillWordTemplate(
+            $templatePath,
+            [
+                'full_name' => $register->client->full_name ?? '',
+                'id_card' => $register->client->id_card ?? '',
+                'address' => $register->client->address ?? '',
+                'birth' => $register->client->birth ?? '',
+                'birthplace' => $register->client->birthplace ?? '',
+                'drivers_license_id' => $register->client->drivers_license_id ?? '',
+                'phone' => $register->client->phone ?? '',
+
+                'model' => $register->car->model ?? '',
+                'shasi_nr' => $register->car->shasi_nr ?? '',
+                'color' => $register->car->color ?? '',
+                'target' => $register->car->target ?? '',
+                'production_year' => $register->car->production_year ?? '',
+
+                'fuel_status' => $register->fuel_status ?? '',
+
+                'start_date' => $register->start_date ?? '',
+                'end_date' => $register->end_date ?? '',
+
+                'days' => $register->days ?? '',
+                'price_per_day' => $register->price_per_day ?? '',
+                'total_price' => $register->total_price ?? '',
+            ]);
+//        return response()->download(storage_path("/files/$filename"), $filename, ['Content-Type' => 'application/jpg'])->deleteFileAfterSend(true);
     }
 
     /**

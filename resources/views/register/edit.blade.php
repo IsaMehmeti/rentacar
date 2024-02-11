@@ -53,32 +53,6 @@
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label class="col-sm-4 control-label text-sm-right pt-1" for="w1-username">{{__('Data e nisjes')}}</label>
-                            <div class="col-sm-8">
-                                <input type="date" class="form-control" name="start_date" id="w1-username" value="{{ $register->start_date }}">
-                            </div>
-                        </div>
-                        <div class="form-group row">
-                            <label class="col-sm-4 control-label text-sm-right pt-1" for="w1-password">{{__('Data e kthimit')}}</label>
-                            <div class="col-sm-8">
-                                <input type="date" class="form-control" name="end_date" id="w1-username" value="{{ $register->end_date }}">
-                            </div>
-                        </div>
-                         <div class="form-group row">
-                            <label class="col-sm-4 control-label text-sm-right pt-1">Cmimi</label>
-                            <div class="col-sm-8">
-                                <div class="row">
-                                    <div class="col-sm-4">
-                                        <input type="text" name="price_per_day" class="form-control disabled" placeholder="dita">
-                                    </div>
-                                    <div class="col-sm-4">
-                                        <input type="text" name="total_price" class="form-control" placeholder="totali">
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-                        <div class="form-group row">
                             <label class="col-sm-4 control-label text-sm-right pt-1" for="w1-username">{{__('Gjendja e derivatit')}}</label>
                             <div class="col-sm-8">
                                 <input type="text" class="form-control" name="fuel_status" id="w1-username" value="{{ $register->fuel_status }}">

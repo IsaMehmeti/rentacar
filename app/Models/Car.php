@@ -10,7 +10,7 @@ class Car extends Model
     use HasFactory;
 
     protected $fillable = [
-        'model', 'marsh', 'production_year', 'target', 'shasi_nr', 'owner', 'color'
+        'model', 'marsh', 'production_year', 'target', 'shasi_nr', 'owner', 'color', 'comment'
     ];
     protected $with = ['images'];
 

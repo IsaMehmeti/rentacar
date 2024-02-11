@@ -21,7 +21,10 @@ class Register extends Model
         'end_date',
         'comment',
         'fuel_status',
-        'driver'
+        'driver',
+        'birthplace',
+        'drivers_license_id',
+        'days',
     ];
     protected $with = ['car', 'client'];
 

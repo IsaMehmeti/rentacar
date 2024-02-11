@@ -66,6 +66,12 @@
                                 <input type="text" class="form-control" name="owner" id="w1-username" value="{{ $car->owner }}">
                             </div>
                         </div>
+                        <div class="form-group row">
+                        <label class="col-sm-4 control-label text-sm-right pt-1" for="w1-password">{{__('Koment')}}</label>
+                        <div class="col-sm-8">
+                            <textarea type="text" class="form-control" name="comment" id="w1-username"  value="{{ $car->comment }}">{{ $car->comment }} </textarea>
+                        </div>
+                    </div>
                     </div>
 
                 </div>

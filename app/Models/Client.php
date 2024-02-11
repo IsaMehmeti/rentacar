@@ -10,7 +10,7 @@ class Client extends Model
     use HasFactory;
 
      protected $fillable = [
-        'full_name', 'address', 'phone', 'id_card', 'id_expire', 'birth', 'passaport_nr'
+        'full_name', 'address', 'phone', 'id_card', 'id_expire', 'birth', 'birthplace', 'drivers_license_id'
     ];
 
     public function registers()
