@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 */
 
  //perdoruesit
-Auth::routes();
+Auth::routes(['register' => false]);
 
 //user needs to be logged in routes
 Route::group(['middleware' => 'auth'], function(){
