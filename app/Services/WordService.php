@@ -17,7 +17,7 @@ function fillWordTemplate($templatePath, $data) {
 
     return response()->streamDownload(function () use ($templateProcessor) {
         $templateProcessor->saveAs('php://output');
-    }, str_replace(' ', '-', $data["full_name"]."-".$data["model"].".docx"));
+    }, str_replace(' ', '-', $data["full_name"]."-".$data["model"]."-".$data['start_date'].".docx"));
 }
 
 
