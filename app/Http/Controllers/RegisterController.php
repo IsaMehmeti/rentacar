@@ -26,7 +26,11 @@ class RegisterController extends Controller
      */
     public function index()
     {
-        $registers = Register::all();
+        $registers = Register::with(['car' => function ($query) {
+            $query->withTrashed();
+        }, 'client' => function ($query) {
+            $query->withTrashed();
+        }])->get();
         return view('register.index', compact('registers'));
     }
 
@@ -81,11 +85,8 @@ class RegisterController extends Controller
             'client_id' => 'required|exists:clients,id',
         ]);
         $register = Register::create($request->all());
-        $templatePath = public_path('kontrata.docx');
-        $outputPath = storage_path('files/kontrata.docx');
-
         return $this->wordService->fillWordTemplate(
-            $templatePath,
+            public_path('kontrata.docx'),
             [
                 'full_name' => $register->client->full_name ?? '',
                 'id_card' => $register->client->id_card ?? '',
@@ -167,26 +168,38 @@ class RegisterController extends Controller
 
     public function download($id)
     {
-        $register = Register::findOrFail($id);
-        $filename =  $this->pdfService->makePdf([
-            'name' => $register->client->full_name,
-            'phone' => $register->client->phone,
-            'address' => $register->client->address,
-            'driver' => $register->client->full_name,
-            'id_card' => $register->client->id_card,
-            'passaport' => $register->client->passaport_nr,
-            'birth' => $register->client->birth,
+        $register = Register::where('id', $id)->with(['car' => function ($query) {
+            $query->withTrashed();
+        }, 'client' => function ($query) {
+            $query->withTrashed();
+        }])->first();
+        $templatePath = public_path('kontrata.docx');
+        return $this->wordService->fillWordTemplate(
+            $templatePath,
+            [
+                'full_name' => $register->client->full_name ?? '',
+                'id_card' => $register->client->id_card ?? '',
+                'address' => $register->client->address ?? '',
+                'birth' => $register->client->birth ?? '',
+                'birthplace' => $register->client->birthplace ?? '',
+                'drivers_license_id' => $register->client->drivers_license_id ?? '',
+                'phone' => $register->client->phone ?? '',
 
-            'target' => $register->car->target,
-            'car_model' => $register->car->model.' '.$register->car->marsh.' - '.$register->car->color,
-            'filename' => str_replace(' ', '', $register->car->model).''.str_replace(' ', '',$register->client->full_name),
-            'production_year' => $register->car->production_year,
-            'shasi_nr' => $register->car->shasi_nr,
-            'start_date' => $register->start_date,
-            'end_date' => $register->end_date,
-            'derivat' => $register->fuel_status,
-        ]);
-        return response()->download(storage_path("/files/$filename"), $filename, ['Content-Type' => 'application/jpg'])->deleteFileAfterSend(true);
+                'model' => $register->car->model ?? '',
+                'shasi_nr' => $register->car->shasi_nr ?? '',
+                'color' => $register->car->color ?? '',
+                'target' => $register->car->target ?? '',
+                'production_year' => $register->car->production_year ?? '',
+
+                'fuel_status' => $register->fuel_status ?? '',
+
+                'start_date' => $register->start_date ?? '',
+                'end_date' => $register->end_date ?? '',
+
+                'days' => $register->days ?? '',
+                'price_per_day' => $register->price_per_day ?? '',
+                'total_price' => $register->total_price ?? '',
+            ]);
     }
 
 }
