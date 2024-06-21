@@ -93,8 +93,8 @@ class RegisterController extends Controller
         $start_date->setTime($currentDateTime->format('H'), $currentDateTime->format('i'));
         $end_date->setTime($currentDateTime->format('H'), $currentDateTime->format('i'));
 
-        $start_date = date_format($start_date, "d/m/Y H:i");
-        $end_date = date_format($end_date, "d/m/Y H:i");
+        $start_date = date_format($start_date, "d-m-Y H:i");
+        $end_date = date_format($end_date, "d-m-Y H:i");
         $request->start_date = $start_date;
         $request->end_date = $end_date;
         $register = Register::create($request->all());
