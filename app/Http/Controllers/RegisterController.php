@@ -104,8 +104,8 @@ class RegisterController extends Controller
 
                 'fuel_status' => $register->fuel_status ?? '',
 
-                'start_date' => $register->start_date ? date_format(new \DateTime($register->start_date) ,"d/m/Y h:m") : '',
-                'end_date' => $register->end_date ? date_format(new \DateTime($register->end_date) ,"d/m/Y h:m") : '',
+                'start_date' => $register->start_date ? date_format(new \DateTime($register->start_date) ,"d-m-Y h:m") : '',
+                'end_date' => $register->end_date ? date_format(new \DateTime($register->end_date) ,"d-m-Y h:m") : '',
 
                 'days' => $register->days ?? '',
                 'price_per_day' => $register->price_per_day ?? '',
