@@ -84,11 +84,11 @@ class RegisterController extends Controller
             'car_id' => 'required|exists:cars,id',
             'client_id' => 'required|exists:clients,id',
         ]);
-        $timezone = new DateTimeZone('Europe/Berlin');
+        $timezone = new \DateTimeZone('Europe/Berlin');
 
-        $start_date = new DateTime($request->start_date, $timezone);
-        $end_date = new DateTime($request->end_date, $timezone);
-        $currentDateTime = new DateTime('now', $timezone);
+        $start_date = new \DateTime($request->start_date, $timezone);
+        $end_date = new \DateTime($request->end_date, $timezone);
+        $currentDateTime = new \DateTime('now', $timezone);
 
         $start_date->setTime($currentDateTime->format('H'), $currentDateTime->format('i'));
         $request->start_date = date_format($start_date, "d/m/Y H:i");
