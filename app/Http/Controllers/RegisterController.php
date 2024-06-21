@@ -84,6 +84,15 @@ class RegisterController extends Controller
             'car_id' => 'required|exists:cars,id',
             'client_id' => 'required|exists:clients,id',
         ]);
+        $timezone = new DateTimeZone('Europe/Berlin');
+
+        $start_date = new DateTime($request->start_date, $timezone);
+        $end_date = new DateTime($request->end_date, $timezone);
+        $currentDateTime = new DateTime('now', $timezone);
+
+        $start_date->setTime($currentDateTime->format('H'), $currentDateTime->format('i'));
+        $request->start_date = date_format($start_date, "d/m/Y H:i");
+        $request->end_date = date_format($end_date, "d/m/Y H:i");
         $register = Register::create($request->all());
         return $this->wordService->fillWordTemplate(
             public_path('kontrata.docx'),
@@ -104,8 +113,8 @@ class RegisterController extends Controller
 
                 'fuel_status' => $register->fuel_status ?? '',
 
-                'start_date' => $register->start_date ? date_format(new \DateTime($register->start_date) ,"d-m-Y h:m") : '',
-                'end_date' => $register->end_date ? date_format(new \DateTime($register->end_date) ,"d-m-Y h:m") : '',
+                'start_date' => $register->start_date ?? '',
+                'end_date' => $register->end_date ?? '',
 
                 'days' => $register->days ?? '',
                 'price_per_day' => $register->price_per_day ?? '',
