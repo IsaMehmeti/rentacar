@@ -42,10 +42,7 @@ class CarController extends Controller
      */
     public function store(Request $request)
     {
-        $car = Car::create($request->all());
-        if ($request->file('file')){
-            $this->uploadFile($request->file('file'), $car->id);
-        }
+        Car::create($request->all());
         return redirect()->back()->with('status', 'U krijua me sukses');
     }
 

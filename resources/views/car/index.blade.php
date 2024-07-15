@@ -27,6 +27,8 @@
                     <tr>
                         <th>{{__('Modeli')}}</th>
                         <th>{{__('Viti i prodhimit')}}</th>
+                        <th>{{__('Skadimi i Regjistrimit')}}</th>
+                        <th>{{__('Kontrollimi Teknik i fundit')}}</th>
                         <th>{{__('Targeti')}}</th>
                         <th>{{__('Veprime')}}</th>
                     </tr>
@@ -35,6 +37,22 @@
                     @forelse($cars as $car)
                         <td>{{$car->model}} {{$car->marsh}} - {{$car->color}}</td>
                         <td>{{$car->production_year}}</td>
+                        <td>
+                            @php
+                                $registrationDate = \Carbon\Carbon::parse($car->registration);
+                                $oneYearAfter = $registrationDate->addYear();
+                                $oneWeekBeforeOneYear = $oneYearAfter->copy()->subWeek();
+                            @endphp
+
+                            @if($oneYearAfter->isPast())
+                                <span class="highlight" style="background-color:#dc3545">{{$oneYearAfter->format('d-m-Y')}}</span>
+                            @elseif(\Carbon\Carbon::now()->between($oneWeekBeforeOneYear, $oneYearAfter))
+                                <span class="highlight" style="background-color:#f8c867">{{$oneYearAfter->format('d-m-Y')}}</span>
+                            @else
+                                <span class="highlight" style="background-color:#198754">{{$oneYearAfter->format('d-m-Y')}}</span>
+                            @endif
+                            </td>
+                        <td>{{$car->technical_control}}</td>
                         <td>{{$car->target}}</td>
                         <td class="actions">
                             <form id="delete-form {{$car->id}}" class="hidden" action="{{route('cars.destroy', $car->id)}}" method="POST">
@@ -47,7 +65,7 @@
                         </td>
                     </tr>
                     @empty
-                        <tr class="odd"><td valign="top" colspan="4" class="dataTables_empty">{{__('No data available in table')}}</td></tr>
+                        <tr class="odd"><td valign="top" colspan="5" class="dataTables_empty">{{__('No data available in table')}}</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -65,5 +83,5 @@
     <script src="{{asset('vendor/select2/js/select2.js')}}"></script>
     <script src="{{asset('vendor/datatables/media/js/jquery.dataTables.min.js')}}"></script>
     <script src="{{asset('vendor/datatables/media/js/dataTables.bootstrap4.min.js')}}"></script>
-    <script src="{{asset('js/examples/examples.datatables.editable.js')}}"></script>
+    <script src="{{asset('js/examples/examples.datatables.cars.js')}}"></script>
 @endsection

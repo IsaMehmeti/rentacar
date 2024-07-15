@@ -67,6 +67,18 @@
                             </div>
                         </div>
                         <div class="form-group row">
+                            <label class="col-sm-4 control-label text-sm-right pt-1" for="w1-password">{{__('Kontrollimi Teknik')}}</label>
+                            <div class="col-sm-8">
+                                <input type="date" class="form-control" name="technical_control" id="w1-username" value="{{ $car->technical_control }}">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 control-label text-sm-right pt-1" for="w1-password">{{__('Regjistrimi')}}</label>
+                            <div class="col-sm-8">
+                                <input type="date" class="form-control" name="registration" id="w1-username" value="{{ $car->registration }}">
+                            </div>
+                        </div>
+                        <div class="form-group row">
                         <label class="col-sm-4 control-label text-sm-right pt-1" for="w1-password">{{__('Koment')}}</label>
                         <div class="col-sm-8">
                             <textarea type="text" class="form-control" name="comment" id="w1-username"  value="{{ $car->comment }}">{{ $car->comment }} </textarea>
