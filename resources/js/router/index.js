@@ -1,5 +1,6 @@
 import AppLayout from "@/layout/AppLayout.vue";
 import { createRouter, createWebHistory } from "vue-router";
+import { useAuthStore } from "@/stores/authStore.js";
 
 const routes = [
     {
@@ -10,12 +11,13 @@ const routes = [
             {
                 path: "/",
                 name: "dashboard",
+                meta: { title: "Paneli", auth: true },
                 component: () => import("@/views/Dashboard.vue"),
             },
             {
                 path: "/contracts",
                 name: "Contracts",
-                meta: { title: "Kontratat" },
+                meta: { title: "Kontratat", auth: true },
                 component: () =>
                     import("@/views/pages/contracts/Contracts.vue"),
             },
@@ -157,9 +159,9 @@ const routes = [
     },
 
     {
-        path: "/auth/login",
+        path: "/login",
         name: "login",
-        meta: { title: "login" },
+        meta: { title: "Login" },
         component: () => import("@/views/pages/auth/Login.vue"),
     },
     {
@@ -181,6 +183,11 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
     document.title = `${to.meta.title} | Rent a Car Dushi`;
+    const authStore = useAuthStore();
+    if (to.meta.auth && !authStore.isAuthenticated) {
+        console.log("here");
+        next("/login");
+    }
     next();
 });
 

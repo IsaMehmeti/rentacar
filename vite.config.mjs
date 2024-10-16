@@ -8,6 +8,7 @@ import Components from "unplugin-vue-components/vite";
 export default defineConfig({
     optimizeDeps: {
         noDiscovery: true,
+	    include: ['yup']
     },
     plugins: [
         laravel({

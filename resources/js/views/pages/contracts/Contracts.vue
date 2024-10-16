@@ -9,7 +9,6 @@ import { useRoute } from "vue-router";
 const route = useRoute();
 
 const pageTitle = computed(() => route.meta.title);
-console.log(pageTitle, "PageTitle");
 onMounted(() => {
     ProductService.getProducts().then((data) => (products.value = data));
 });

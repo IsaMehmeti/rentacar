@@ -2,6 +2,11 @@
 import { useLayout } from "@/layout/composables/layout";
 import AppConfigurator from "./AppConfigurator.vue";
 import { onMounted, onBeforeMount } from "vue";
+import { useAuthStore } from "@/stores/authStore.js";
+import { useRouter } from "vue-router";
+
+const authStore = useAuthStore();
+const router = useRouter();
 
 const { onMenuToggle, toggleDarkMode, executeDarkModeToggle, isDarkTheme } =
     useLayout();
@@ -607,17 +612,13 @@ l-3 22 -13 -23z"
 
             <div class="layout-topbar-menu hidden lg:block">
                 <div class="layout-topbar-menu-content">
-                    <button type="button" class="layout-topbar-action">
-                        <i class="pi pi-calendar"></i>
-                        <span>Calendar</span>
-                    </button>
-                    <button type="button" class="layout-topbar-action">
-                        <i class="pi pi-inbox"></i>
-                        <span>Messages</span>
-                    </button>
-                    <button type="button" class="layout-topbar-action">
-                        <i class="pi pi-user"></i>
-                        <span>Profile</span>
+                    <button
+                        type="button"
+                        @click="authStore.logout() && router.push('/login')"
+                        class="layout-topbar-action"
+                    >
+                        <i class="pi pi-sign-out"></i>
+                        <span>Logout</span>
                     </button>
                 </div>
             </div>
