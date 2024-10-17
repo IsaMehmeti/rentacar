@@ -614,7 +614,12 @@ l-3 22 -13 -23z"
                 <div class="layout-topbar-menu-content">
                     <button
                         type="button"
-                        @click="authStore.logout() && router.push('/login')"
+                        @click="
+                            async () => {
+                                await authStore.logout();
+                                await router.push('/login');
+                            }
+                        "
                         class="layout-topbar-action"
                     >
                         <i class="pi pi-sign-out"></i>

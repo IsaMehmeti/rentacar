@@ -1,6 +1,7 @@
 import AppLayout from "@/layout/AppLayout.vue";
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@/stores/authStore.js";
+import { useTokenExpired } from "@/hooks/useTokenExpired.js";
 
 const routes = [
     {
@@ -183,10 +184,13 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
     document.title = `${to.meta.title} | Rent a Car Dushi`;
-    const authStore = useAuthStore();
-    if (to.meta.auth && !authStore.isAuthenticated) {
-        console.log("here");
-        next("/login");
+    if (to.meta.auth) {
+        const authStore = useAuthStore();
+        const token = authStore.token;
+        if (!token || useTokenExpired(token)) {
+            authStore.logout();
+            next("/login");
+        }
     }
     next();
 });

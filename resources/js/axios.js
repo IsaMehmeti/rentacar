@@ -1,4 +1,5 @@
 import axios from "axios";
+import { useAuthStore } from "@/stores/authStore.js";
 /**
  * Initialize Axios
  */
@@ -34,34 +35,19 @@ api.interceptors.response.use(
     },
 );
 
-/**
- * Response Interceptor
- * Handles global error handling
- */
-// apiClient.interceptors.response.use(
-//   (response) => response,
-//   (error) => {
-//     if (error.response) {
-//       // Handle different status codes here
-//       switch (error.response.status) {
-//         case 401:
-//           // Redirect to login or refresh token
-//           break;
-//         case 403:
-//           // Access denied
-//           break;
-//         case 500:
-//           // Server error
-//           break;
-//         // Add more status cases if needed
-//         default:
-//           console.error(error.response.data.message);
-//       }
-//     }
-//     return Promise.reject(error);
-//   }
-// );
-
+// Add a request interceptor
+api.interceptors.request.use(
+    (config) => {
+        const authStore = useAuthStore();
+        if (authStore.token) {
+            config.headers.Authorization = `Bearer ${authStore.token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    },
+);
 // export default api;
 export default () => {
     return api;
