@@ -6,13 +6,13 @@ import { useAuthStore } from "@/stores/authStore.js";
 import { useRouter } from "vue-router";
 import { Form, Field, ErrorMessage } from "vee-validate";
 import * as yup from "yup";
-import { useToast } from "primevue/usetoast";
+import { useI18n } from "vue-i18n";
 
 const email = ref("");
 const password = ref("");
 const authStore = useAuthStore();
 const router = useRouter();
-const toast = useToast();
+const { t } = useI18n();
 
 const {
     mutate: onSave,
@@ -39,14 +39,6 @@ const {
         return router.push("/");
     },
 });
-// const { isPending, isFetching, isError, data, error } = useQuery({
-//     queryKey: ["login", { email: email.value, password: password.value }],
-//     queryFn: () =>
-//         AuthService().login({
-//             email: email.value,
-//             password: password.value,
-//         }),
-// });
 
 const schema = yup.object({
     email: yup.string().required().email(),
@@ -617,9 +609,9 @@ l-3 22 -13 -23z"
                         >
                             Rent a Car Dushi
                         </div>
-                        <span class="text-muted-color font-medium"
-                            >Mire se vini!</span
-                        >
+                        <span class="text-muted-color font-medium">
+                            {{ t("welcome") }}
+                        </span>
                     </div>
                     <Form @submit="onSave" :validation-schema="schema">
                         <div>
@@ -640,7 +632,7 @@ l-3 22 -13 -23z"
                                     <InputText
                                         id="email1"
                                         type="text"
-                                        placeholder="Email address"
+                                        placeholder="Email"
                                         class="w-full"
                                         v-model="email"
                                     />
@@ -680,7 +672,7 @@ l-3 22 -13 -23z"
                                 class="flex items-center justify-between mt-2 mb-8 gap-8"
                             ></div>
                             <Button
-                                label="Sign In"
+                                :label="t('sign-in')"
                                 class="w-full"
                                 type="submit"
                                 :loading="isPending"

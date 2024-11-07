@@ -439,6 +439,23 @@ const surfaces = ref([
             950: "#0c1920",
         },
     },
+    {
+        name: "crimson",
+        palette: {
+            0: "#ffffff",
+            50: "#fff5f5",
+            100: "#ffeaea",
+            200: "#ffc8c8",
+            300: "#ff9f9f",
+            400: "#f47474",
+            500: "#db4c4c",
+            600: "#c33737",
+            700: "#a72828",
+            800: "#871f1f",
+            900: "#661515",
+            950: "#4a0e0e",
+        },
+    },
 ]);
 
 function getPresetExt() {
@@ -536,7 +553,6 @@ function getPresetExt() {
 }
 
 function updateColors(type, color) {
-    console.log("updateColors", color);
     if (type === "primary") {
         setPrimary(color.name);
     } else if (type === "surface") {

@@ -5,10 +5,12 @@ import { useToast } from "primevue/usetoast";
 import { onMounted, ref } from "vue";
 import { computed } from "vue";
 import { useRoute } from "vue-router";
+import { useI18n } from "vue-i18n";
 
 const route = useRoute();
 
-const pageTitle = computed(() => route.meta.title);
+const { t } = useI18n();
+const pageTitle = computed(() => t(route.meta.title));
 console.log(pageTitle, "PageTitle");
 onMounted(() => {
     ProductService.getProducts().then((data) => (products.value = data));

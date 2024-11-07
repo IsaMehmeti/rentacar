@@ -7,51 +7,51 @@ const routes = [
     {
         path: "/",
         component: AppLayout,
-        meta: { title: "Dashboard" },
+        meta: { title: "home" },
         children: [
             {
                 path: "/",
                 name: "dashboard",
-                meta: { title: "Paneli", auth: true },
+                meta: { title: "home", auth: true },
                 component: () => import("@/views/Dashboard.vue"),
             },
             {
                 path: "/contracts",
                 name: "Contracts",
-                meta: { title: "Kontratat", auth: true },
+                meta: { title: "registers", auth: true },
                 component: () =>
                     import("@/views/pages/contracts/Contracts.vue"),
             },
             {
                 path: "/contracts/create",
                 name: "Create Contract",
-                meta: { title: "Shto Kontraten" },
+                meta: { title: "add-contract", auth: true },
                 component: () =>
                     import("@/views/pages/contracts/Contracts.vue"),
             },
             {
                 path: "/clients",
                 name: "Clients",
-                meta: { title: "Klientet" },
+                meta: { title: "clients", auth: true },
                 component: () => import("@/views/pages/clients/Clients.vue"),
             },
             {
                 path: "/clients/create",
                 name: "Create Client",
-                meta: { title: "Shto Klientin" },
+                meta: { title: "add-client", auth: true },
                 component: () =>
                     import("@/views/pages/clients/ClientCreate.vue"),
             },
             {
                 path: "/cars",
                 name: "Cars",
-                meta: { title: "Veturat" },
+                meta: { title: "cars", auth: true },
                 component: () => import("@/views/pages/cars/Cars.vue"),
             },
             {
                 path: "/cars/create",
-                name: "Create Car",
-                meta: { title: "Shto Veturen" },
+                name: "add-car",
+                meta: { title: "Shto Veturen", auth: true },
                 component: () => import("@/views/pages/cars/CarsCreate.vue"),
             },
             {
@@ -188,6 +188,7 @@ router.beforeEach((to, from, next) => {
         const authStore = useAuthStore();
         const token = authStore.token;
         if (!token || useTokenExpired(token)) {
+            console.log("Logging Out");
             authStore.logout();
             next("/login");
         }

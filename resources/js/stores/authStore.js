@@ -1,5 +1,4 @@
 import { defineStore } from "pinia";
-import axios from "../axios.js";
 import { AuthService } from "@/service/api/AuthService.js";
 
 export const useAuthStore = defineStore("auth", {
@@ -21,6 +20,7 @@ export const useAuthStore = defineStore("auth", {
                 });
                 this.token = response.data?.access_token;
                 this.user = response.data?.user;
+
                 localStorage.setItem("token", this.token);
             } catch (error) {
                 throw error;

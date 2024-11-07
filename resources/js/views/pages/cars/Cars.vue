@@ -1,491 +1,997 @@
 <script setup>
-import { ProductService } from "@/service/ProductService";
 import { FilterMatchMode } from "@primevue/core/api";
 import { useToast } from "primevue/usetoast";
-import { onMounted, ref } from "vue";
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-
-const route = useRoute();
-
-const pageTitle = computed(() => route.meta.title);
-onMounted(() => {
-    ProductService.getProducts().then((data) => (products.value = data));
-});
+import { CarService } from "@/service/api/CarService.js";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
+import { useI18n } from "vue-i18n";
+import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
+import * as yup from "yup";
+import { ErrorMessage, Field, Form } from "vee-validate";
 
 const toast = useToast();
+const queryClient = useQueryClient();
+
+const { t, locale } = useI18n();
+const route = useRoute();
+
+const pageTitle = computed(() => t(route.meta.title));
+
 const dt = ref();
-const products = ref();
-const productDialog = ref(false);
-const deleteProductDialog = ref(false);
-const deleteProductsDialog = ref(false);
+const carDialog = ref(false);
+const carUpdateDialog = ref(false);
+const submitted = ref(false);
+const deleteCarDialog = ref(false);
+
 const product = ref({});
-const selectedProducts = ref();
+const car = ref({});
 const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
-const submitted = ref(false);
-const statuses = ref([
-    { label: "INSTOCK", value: "instock" },
-    { label: "LOWSTOCK", value: "lowstock" },
-    { label: "OUTOFSTOCK", value: "outofstock" },
-]);
+const carCreateForm = ref(null);
+const carTransmissions = ref(["automatik", "manual"]);
 
-function formatCurrency(value) {
-    if (value)
-        return value.toLocaleString("en-US", {
-            style: "currency",
-            currency: "USD",
+const formattedCarTransmissions = computed(() =>
+    carTransmissions.value.map((transmission) => ({
+        label: transmission, // This is what the user sees in the dropdown
+        value: transmission, // This is the actual value set in `car.marsh`
+    })),
+);
+
+// list cars
+const { isFetching, isError, data, error, refetch } = useQuery({
+    queryKey: ["cars"],
+    queryFn: async () => (await CarService.list()).data,
+});
+
+//delete car
+const { mutate: deleteCar, isPending: isDeleting } = useMutation({
+    mutationFn: async (id) => {
+        await CarService.delete(id);
+    },
+    onSuccess: async () => {
+        const id = car.value.id;
+        queryClient.setQueryData(["cars"], (oldData) => {
+            const newData = [...oldData];
+            newData.splice(
+                data.value.findIndex((c) => c.id === id),
+                1,
+            );
+            return newData;
         });
-    return;
+        toast.add({
+            severity: "success",
+            summary: t("success"),
+            detail: $("delete-success"),
+            life: 3000,
+        });
+        car.value = {};
+    },
+    onError: (error) => {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: $("went-wrong"),
+            life: 3000,
+        });
+        console.log(error);
+        car.value = {};
+    },
+});
+
+// create car
+const {
+    mutate: storeNewCar,
+    isError: carStoreIsError,
+    error: carStoreError,
+} = useMutation({
+    mutationKey: ["cars", car],
+    cacheTime: 0,
+    staleTime: 0,
+    mutationFn: async () => {
+        return await CarService.store(car.value);
+    },
+    onError: (e) => {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: $("went-wrong"),
+            life: 3000,
+        });
+        console.log(error);
+    },
+    onSuccess: (data) => {
+        // queryClient.setQueryData(["cars"], (oldData) => {
+        //     return [...oldData, data?.data?.data];
+        // });
+        car.value = {};
+        carDialog.value = false;
+        refetch();
+    },
+});
+
+// update car
+const {
+    mutate: updateCar,
+    isError: carUpdateIsError,
+    error: carUpdateError,
+} = useMutation({
+    mutationKey: ["cars-update", car],
+    cacheTime: 0,
+    staleTime: 0,
+    mutationFn: async () => {
+        return await CarService.update(car.value, car.value.id);
+    },
+    onError: (e) => {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: $("went-wrong"),
+            life: 3000,
+        });
+        console.log(error);
+    },
+    onSuccess: (data) => {
+        // queryClient.setQueryData(["cars"], (oldData) => {
+        //     return [...oldData, data?.data?.data];
+        // });
+        car.value = {};
+        carUpdateDialog.value = false;
+        refetch();
+    },
+});
+
+function confirmDeleteCar(selectedCar) {
+    car.value = selectedCar;
+    deleteCarDialog.value = true;
 }
 
+function handleDeleteCar() {
+    deleteCarDialog.value = false;
+    //delete car method we get from useMutation
+    deleteCar(car.value.id);
+}
+
+// open create car modal
 function openNew() {
-    product.value = {};
+    car.value = {};
     submitted.value = false;
-    productDialog.value = true;
+    carDialog.value = true;
+}
+function editCar(selectedCar) {
+    car.value = { ...selectedCar };
+    carUpdateDialog.value = true;
 }
 
-function hideDialog() {
-    productDialog.value = false;
-    submitted.value = false;
+function hideCreateCarDialog() {
+    carDialog.value = false;
 }
 
-function saveProduct() {
-    submitted.value = true;
+const schema = ref(createSchema(t)); // Initialize schema with the current locale
 
-    if (product?.value.name?.trim()) {
-        if (product.value.id) {
-            product.value.inventoryStatus = product.value.inventoryStatus.value
-                ? product.value.inventoryStatus.value
-                : product.value.inventoryStatus;
-            products.value[findIndexById(product.value.id)] = product.value;
-            toast.add({
-                severity: "success",
-                summary: "Successful",
-                detail: "Product Updated",
-                life: 3000,
-            });
-        } else {
-            product.value.id = createId();
-            product.value.code = createId();
-            product.value.image = "product-placeholder.svg";
-            product.value.inventoryStatus = product.value.inventoryStatus
-                ? product.value.inventoryStatus.value
-                : "INSTOCK";
-            products.value.push(product.value);
-            toast.add({
-                severity: "success",
-                summary: "Successful",
-                detail: "Product Created",
-                life: 3000,
-            });
-        }
-
-        productDialog.value = false;
-        product.value = {};
-    }
-}
-
-function editProduct(prod) {
-    product.value = { ...prod };
-    productDialog.value = true;
-}
-
-function confirmDeleteProduct(prod) {
-    product.value = prod;
-    deleteProductDialog.value = true;
-}
-
-function deleteProduct() {
-    products.value = products.value.filter(
-        (val) => val.id !== product.value.id,
-    );
-    deleteProductDialog.value = false;
-    product.value = {};
-    toast.add({
-        severity: "success",
-        summary: "Successful",
-        detail: "Product Deleted",
-        life: 3000,
+function createSchema(t) {
+    return yup.object({
+        model: yup
+            .string()
+            .required(t("validation.required", { field: t("model") })),
+        marsh: yup
+            .string()
+            .required(t("validation.required", { field: t("marsh") })),
+        production_year: yup
+            .number()
+            .required(t("validation.required", { field: t("production") })),
+        target: yup
+            .string()
+            .required(t("validation.required", { field: t("target") })),
+        shasi_nr: yup
+            .string()
+            .required(t("validation.required", { field: t("shasi") })),
+        color: yup
+            .string()
+            .required(t("validation.required", { field: t("color") })),
+        comment: yup.string().nullable(),
+        technical_control: yup.date().nullable(),
+        registration: yup.date().nullable(),
     });
 }
-
-function findIndexById(id) {
-    let index = -1;
-    for (let i = 0; i < products.value.length; i++) {
-        if (products.value[i].id === id) {
-            index = i;
-            break;
-        }
-    }
-
-    return index;
-}
-
-function createId() {
-    let id = "";
-    var chars =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    for (var i = 0; i < 5; i++) {
-        id += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return id;
-}
-
-function exportCSV() {
-    dt.value.exportCSV();
-}
-
-function confirmDeleteSelected() {
-    deleteProductsDialog.value = true;
-}
-
-function deleteSelectedProducts() {
-    products.value = products.value.filter(
-        (val) => !selectedProducts.value.includes(val),
-    );
-    deleteProductsDialog.value = false;
-    selectedProducts.value = null;
-    toast.add({
-        severity: "success",
-        summary: "Successful",
-        detail: "Products Deleted",
-        life: 3000,
-    });
-}
-
-function getStatusLabel(status) {
-    switch (status) {
-        case "INSTOCK":
-            return "success";
-
-        case "LOWSTOCK":
-            return "warn";
-
-        case "OUTOFSTOCK":
-            return "danger";
-
-        default:
-            return null;
-    }
-}
+// Watching for changes in the locale to recreate the schema when translation occurs
+watch(locale, () => {
+    schema.value = createSchema(t);
+});
 </script>
 
 <template>
     <div>
+        <!--   List car table start     -->
         <div class="card">
             <div class="font-semibold text-xl mb-4">{{ pageTitle }}</div>
 
             <DataTable
+                v-if="!isError"
                 ref="dt"
-                v-model:selection="selectedProducts"
-                :value="products"
-                dataKey="id"
-                :paginator="true"
-                :rows="10"
+                :currentPageReportTemplate="`${t('displaying')} {first} ${t('to')} {last} ${t('from')} {totalRecords} ${t('cars')}`"
                 :filters="filters"
-                paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+                :loading="isFetching || isDeleting"
+                :paginator="true"
+                :rowHover="true"
+                :rows="10"
                 :rowsPerPageOptions="[5, 10, 25]"
-                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products"
+                :value="data"
+                dataKey="id"
+                paginatorTemplate="PrevPageLink PageLinks NextPageLink CurrentPageReport RowsPerPageDropdown"
+                showGridlines
             >
                 <template #header>
                     <div
                         class="flex flex-wrap gap-2 items-center justify-between"
                     >
-                        <h4 class="m-0">Manage Products</h4>
+                        <Button
+                            :label="t('add-car')"
+                            class="mr-2"
+                            icon="pi pi-plus"
+                            severity="secondary"
+                            @click="openNew"
+                        />
                         <IconField>
                             <InputIcon>
                                 <i class="pi pi-search" />
                             </InputIcon>
                             <InputText
                                 v-model="filters['global'].value"
-                                placeholder="Search..."
+                                :placeholder="`${t('search')}...`"
                             />
                         </IconField>
                     </div>
                 </template>
 
                 <Column
-                    selectionMode="multiple"
-                    style="width: 3rem"
-                    :exportable="false"
-                ></Column>
-                <Column
-                    field="code"
-                    header="Code"
+                    :header="t('model')"
+                    field="model"
                     sortable
                     style="min-width: 12rem"
-                ></Column>
+                >
+                    <template #body="slotProps">
+                        {{ slotProps.data.model }}
+                        {{ slotProps.data.color }} -
+                        {{ slotProps.data.production_year }}
+                    </template>
+                </Column>
                 <Column
-                    field="name"
-                    header="Name"
+                    :header="t('target')"
+                    field="target"
                     sortable
                     style="min-width: 16rem"
                 ></Column>
-                <Column header="Image">
-                    <template #body="slotProps">
-                        <img
-                            :src="`https://primefaces.org/cdn/primevue/images/product/${slotProps.data.image}`"
-                            :alt="slotProps.data.image"
-                            class="rounded"
-                            style="width: 64px"
-                        />
-                    </template>
-                </Column>
                 <Column
-                    field="price"
-                    header="Price"
+                    :header="t('registration')"
+                    field="registration"
                     sortable
-                    style="min-width: 8rem"
-                >
-                    <template #body="slotProps">
-                        {{ formatCurrency(slotProps.data.price) }}
-                    </template>
-                </Column>
-                <Column
-                    field="category"
-                    header="Category"
-                    sortable
-                    style="min-width: 10rem"
-                ></Column>
-                <Column
-                    field="rating"
-                    header="Reviews"
-                    sortable
-                    style="min-width: 12rem"
-                >
-                    <template #body="slotProps">
-                        <Rating
-                            :modelValue="slotProps.data.rating"
-                            :readonly="true"
-                        />
-                    </template>
-                </Column>
-                <Column
-                    field="inventoryStatus"
-                    header="Status"
-                    sortable
-                    style="min-width: 12rem"
+                    style="min-width: 16rem"
                 >
                     <template #body="slotProps">
                         <Tag
-                            :value="slotProps.data.inventoryStatus"
-                            :severity="
-                                getStatusLabel(slotProps.data.inventoryStatus)
+                            v-if="slotProps.data.registration"
+                            v-tooltip="
+                                t(
+                                    `${slotProps.data.registration_status}-registration`,
+                                    { 'control-type': t('registration') },
+                                )
                             "
-                        />
+                            :severity="slotProps.data.registration_status"
+                            :value="slotProps.data.registration"
+                        ></Tag>
                     </template>
                 </Column>
+                <Column
+                    :header="t('technical-control')"
+                    field="technical_control"
+                    sortable
+                    style="min-width: 16rem"
+                >
+                    <template #body="slotProps">
+                        <Tag
+                            v-if="slotProps.data.technical_control"
+                            v-tooltip="
+                                t(
+                                    `${slotProps.data.technical_control_status}-registration`,
+                                    { 'control-type': t('technical-control') },
+                                )
+                            "
+                            :severity="slotProps.data.technical_control_status"
+                            :value="slotProps.data.technical_control"
+                        ></Tag>
+                    </template>
+                </Column>
+
                 <Column :exportable="false" style="min-width: 12rem">
                     <template #body="slotProps">
                         <Button
+                            class="mr-2"
                             icon="pi pi-pencil"
                             outlined
                             rounded
-                            class="mr-2"
-                            @click="editProduct(slotProps.data)"
+                            @click="editCar(slotProps.data)"
                         />
                         <Button
                             icon="pi pi-trash"
                             outlined
                             rounded
                             severity="danger"
-                            @click="confirmDeleteProduct(slotProps.data)"
+                            @click="confirmDeleteCar(slotProps.data)"
                         />
                     </template>
                 </Column>
+                <Column
+                    :header="t('color')"
+                    field="color"
+                    hidden
+                    style="min-width: 16rem"
+                ></Column>
+                <template #empty> {{ t("no-data-found") }} </template>
             </DataTable>
         </div>
+        <!--   List car table end     -->
 
+        <!--   Create car dialog start     -->
         <Dialog
-            v-model:visible="productDialog"
-            :style="{ width: '450px' }"
-            header="Product Details"
+            v-model:visible="carDialog"
+            :dismissableMask="true"
             :modal="true"
+            :style="{ width: '500px' }"
         >
-            <div class="flex flex-col gap-6">
-                <img
-                    v-if="product.image"
-                    :src="`https://primefaces.org/cdn/primevue/images/product/${product.image}`"
-                    :alt="product.image"
-                    class="block m-auto pb-4"
-                />
-                <div>
-                    <label for="name" class="block font-bold mb-3">Name</label>
-                    <InputText
-                        id="name"
-                        v-model.trim="product.name"
-                        required="true"
-                        autofocus
-                        :invalid="submitted && !product.name"
-                        fluid
-                    />
-                    <small
-                        v-if="submitted && !product.name"
-                        class="text-red-500"
-                        >Name is required.</small
-                    >
-                </div>
-                <div>
-                    <label for="description" class="block font-bold mb-3"
-                        >Description</label
-                    >
-                    <Textarea
-                        id="description"
-                        v-model="product.description"
-                        required="true"
-                        rows="3"
-                        cols="20"
-                        fluid
-                    />
-                </div>
-                <div>
-                    <label for="inventoryStatus" class="block font-bold mb-3"
-                        >Inventory Status</label
-                    >
-                    <Select
-                        id="inventoryStatus"
-                        v-model="product.inventoryStatus"
-                        :options="statuses"
-                        optionLabel="label"
-                        placeholder="Select a Status"
-                        fluid
-                    ></Select>
-                </div>
-
-                <div>
-                    <span class="block font-bold mb-4">Category</span>
-                    <div class="grid grid-cols-12 gap-4">
-                        <div class="flex items-center gap-2 col-span-6">
-                            <RadioButton
-                                id="category1"
-                                v-model="product.category"
-                                name="category"
-                                value="Accessories"
-                            />
-                            <label for="category1">Accessories</label>
-                        </div>
-                        <div class="flex items-center gap-2 col-span-6">
-                            <RadioButton
-                                id="category2"
-                                v-model="product.category"
-                                name="category"
-                                value="Clothing"
-                            />
-                            <label for="category2">Clothing</label>
-                        </div>
-                        <div class="flex items-center gap-2 col-span-6">
-                            <RadioButton
-                                id="category3"
-                                v-model="product.category"
-                                name="category"
-                                value="Electronics"
-                            />
-                            <label for="category3">Electronics</label>
-                        </div>
-                        <div class="flex items-center gap-2 col-span-6">
-                            <RadioButton
-                                id="category4"
-                                v-model="product.category"
-                                name="category"
-                                value="Fitness"
-                            />
-                            <label for="category4">Fitness</label>
-                        </div>
+            <template #header>
+                <div class="flex justify-between items-center w-full">
+                    <span class="text-xl font-bold">{{ t("add-car") }}</span>
+                    <div class="flex items-center gap-2">
+                        <LanguageSwitcher />
                     </div>
                 </div>
-
-                <div class="grid grid-cols-12 gap-4">
-                    <div class="col-span-6">
-                        <label for="price" class="block font-bold mb-3"
-                            >Price</label
-                        >
-                        <InputNumber
-                            id="price"
-                            v-model="product.price"
-                            mode="currency"
-                            currency="USD"
-                            locale="en-US"
-                            fluid
-                        />
-                    </div>
-                    <div class="col-span-6">
-                        <label for="quantity" class="block font-bold mb-3"
-                            >Quantity</label
-                        >
-                        <InputNumber
-                            id="quantity"
-                            v-model="product.quantity"
-                            integeronly
-                            fluid
-                        />
-                    </div>
-                </div>
-            </div>
-
-            <template #footer>
-                <Button
-                    label="Cancel"
-                    icon="pi pi-times"
-                    text
-                    @click="hideDialog"
-                />
-                <Button label="Save" icon="pi pi-check" @click="saveProduct" />
             </template>
-        </Dialog>
+            <Form
+                ref="carCreateForm"
+                :validation-schema="schema"
+                @submit="storeNewCar"
+            >
+                <div class="flex flex-col gap-6">
+                    <div class="grid grid-cols-12 gap-4">
+                        <div class="col-span-6">
+                            <label class="block font-bold mb-3" for="model">{{
+                                t("model")
+                            }}</label>
+                            <Field
+                                v-slot="{ values, errorMessage }"
+                                v-model="car.model"
+                                :validateOnChange="true"
+                                name="model"
+                            >
+                                <InputText
+                                    id="model"
+                                    v-model="car.model"
+                                    :invalid="!!errorMessage"
+                                    class="w-full"
+                                    placeholder="Golf 7"
+                                />
+                                <ErrorMessage
+                                    class="text-red-500 text-m mt-2"
+                                    name="model"
+                                />
+                            </Field>
+                        </div>
 
+                        <div class="col-span-6">
+                            <label class="block font-bold mb-3" for="marsh">{{
+                                t("marsh")
+                            }}</label>
+                            <Field
+                                v-slot="{ values, errorMessage }"
+                                v-model="car.marsh"
+                                :validateOnChange="true"
+                                name="marsh"
+                            >
+                                <Select
+                                    v-model="car.marsh"
+                                    :invalid="!!errorMessage"
+                                    :options="formattedCarTransmissions"
+                                    :placeholder="t('select-one')"
+                                    class="w-full"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                />
+                                <ErrorMessage
+                                    class="text-red-500 text-m mt-2"
+                                    name="marsh"
+                                />
+                            </Field>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-4">
+                        <div class="col-span-6">
+                            <label class="block font-bold mb-3" for="color">{{
+                                t("color")
+                            }}</label>
+                            <Field
+                                v-slot="{ values, errorMessage }"
+                                v-model="car.color"
+                                :validateOnChange="true"
+                                name="color"
+                            >
+                                <InputText
+                                    id="color"
+                                    v-model="car.color"
+                                    :invalid="!!errorMessage"
+                                    :placeholder="t('blue')"
+                                    class="w-full"
+                                />
+                                <ErrorMessage
+                                    class="text-red-500 text-m mt-2"
+                                    name="color"
+                                />
+                            </Field>
+                        </div>
+                        <div class="col-span-6">
+                            <label
+                                class="block font-bold mb-3"
+                                for="production_year"
+                                >{{ t("production") }}</label
+                            >
+                            <Field
+                                v-slot="{ values, errorMessage }"
+                                v-model="car.production_year"
+                                :validateOnChange="true"
+                                name="production_year"
+                            >
+                                <InputText
+                                    id="production_year"
+                                    v-model="car.production_year"
+                                    :invalid="!!errorMessage"
+                                    class="w-full"
+                                    placeholder="2015"
+                                />
+                                <ErrorMessage
+                                    class="text-red-500 text-m mt-2"
+                                    name="production_year"
+                                />
+                            </Field>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-4">
+                        <div class="col-span-6">
+                            <label class="block font-bold mb-3" for="target">{{
+                                t("target")
+                            }}</label>
+                            <Field
+                                v-slot="{ values, errorMessage }"
+                                v-model="car.target"
+                                :validateOnChange="true"
+                                name="target"
+                            >
+                                <InputText
+                                    id="target"
+                                    v-model="car.target"
+                                    :invalid="!!errorMessage"
+                                    class="w-full"
+                                    placeholder="05 999 AA"
+                                />
+                                <ErrorMessage
+                                    class="text-red-500 text-m mt-2"
+                                    name="target"
+                                />
+                            </Field>
+                        </div>
+                        <div class="col-span-6">
+                            <label class="block font-bold mb-3" for="shasi">{{
+                                t("shasi")
+                            }}</label>
+                            <Field
+                                v-slot="{ values, errorMessage }"
+                                v-model="car.shasi_nr"
+                                :validateOnChange="true"
+                                name="shasi_nr"
+                            >
+                                <InputText
+                                    id="shasi_nr"
+                                    v-model="car.shasi_nr"
+                                    :invalid="!!errorMessage"
+                                    class="w-full"
+                                    placeholder="WVWZZZAUZDP003950"
+                                />
+                                <ErrorMessage
+                                    class="text-red-500 text-m mt-2"
+                                    name="shasi_nr"
+                                />
+                            </Field>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-4">
+                        <div class="col-span-6">
+                            <label
+                                class="block font-bold mb-3"
+                                for="registration"
+                                >{{ t("registration") }}</label
+                            >
+                            <Field
+                                v-slot="{ values }"
+                                v-model="car.registration"
+                                :validateOnChange="true"
+                                name="registration"
+                            >
+                                <DatePicker
+                                    v-model="car.registration"
+                                    :showButtonBar="true"
+                                    :showIcon="true"
+                                    dateFormat="dd-mm-yy"
+                                    placeholder="dd-mm-yyyy"
+                                />
+                                <ErrorMessage
+                                    class="text-red-500 text-m mt-2"
+                                    name="registration"
+                                />
+                            </Field>
+                        </div>
+                        <div class="col-span-6">
+                            <label
+                                class="block font-bold mb-3"
+                                for="technical_control"
+                                icon="pi pi-arrow-left"
+                                >{{ t("technical-control") }} (<span
+                                    v-if="car.owner"
+                                >
+                                    {{ t("yearly") }}
+                                </span>
+                                <span v-else> {{ t("6-month") }} </span>)
+                            </label>
+                            <Field
+                                v-slot="{ values }"
+                                v-model="car.technical_control"
+                                :validateOnChange="true"
+                                name="technical_control"
+                            >
+                                <DatePicker
+                                    v-model="car.technical_control"
+                                    :showButtonBar="true"
+                                    :showIcon="true"
+                                    ateFormat="dd-mm-yy"
+                                    placeholder="dd-mm-yyyy"
+                                />
+                                <ErrorMessage
+                                    class="text-red-500 text-m mt-2"
+                                    name="technical_control"
+                                />
+                            </Field>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-4">
+                        <div class="col-span-6">
+                            <label class="block font-bold mb-3" for="owner">{{
+                                t("owner")
+                            }}</label>
+                            <Field
+                                v-slot="{ values }"
+                                v-model="car.owner"
+                                :validateOnChange="true"
+                                name="owner"
+                            >
+                                <InputText
+                                    id="owner"
+                                    v-model="car.owner"
+                                    :placeholder="t('owner-placeholder')"
+                                    class="w-full"
+                                />
+                                <ErrorMessage
+                                    class="text-red-500 text-m mt-2"
+                                    name="registration"
+                                />
+                            </Field>
+                        </div>
+                        <div class="col-span-6">
+                            <Message icon="pi pi-arrow-left" severity="info">{{
+                                t("owner-info")
+                            }}</Message>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold mb-3" for="comment">{{
+                            t("comment")
+                        }}</label>
+                        <Field
+                            v-slot="{ values }"
+                            v-model="car.comment"
+                            :validateOnChange="true"
+                            name="comment"
+                        >
+                            <Textarea
+                                id="comment"
+                                v-model="car.comment"
+                                class="w-full"
+                                cols="20"
+                                rows="3"
+                            />
+                            <ErrorMessage
+                                class="text-red-500 text-m mt-2"
+                                name="comment"
+                            />
+                        </Field>
+                    </div>
+                </div>
+                <div class="float-end mt-4">
+                    <Button
+                        :label="t('cancel')"
+                        icon="pi pi-times"
+                        text
+                        @click="hideCreateCarDialog"
+                    />
+                    <Button
+                        :label="t('save')"
+                        class="ml-3.5"
+                        icon="pi pi-check"
+                        type="submit"
+                    />
+                </div>
+            </Form>
+            <!-- Add a clear div -->
+            <div style="clear: both"></div>
+            <Message
+                v-for="error in carStoreError.response.data.errors"
+                v-if="carStoreError?.status === 422"
+                class="mt-2 mb-2"
+                icon="pi pi-times-circle"
+                severity="error"
+            >
+                {{ error[0] }}
+            </Message>
+        </Dialog>
+        <!--   Create car dialog end     -->
+
+        <!--   Update car dialog start     -->
         <Dialog
-            v-model:visible="deleteProductDialog"
-            :style="{ width: '450px' }"
-            header="Confirm"
+            v-model:visible="carUpdateDialog"
+            :dismissableMask="true"
             :modal="true"
+            :style="{ width: '500px' }"
+        >
+            <template #header>
+                <div class="flex justify-between items-center w-full">
+                    <span class="text-xl font-bold">{{ t("update-car") }}</span>
+                    <div class="flex items-center gap-2">
+                        <LanguageSwitcher />
+                    </div>
+                </div>
+            </template>
+            <Form
+                ref="carCreateForm"
+                :validation-schema="schema"
+                @submit="updateCar"
+            >
+                <div class="flex flex-col gap-6">
+                    <div class="grid grid-cols-12 gap-4">
+                        <div class="col-span-6">
+                            <label class="block font-bold mb-3" for="model">{{
+                                t("model")
+                            }}</label>
+                            <Field
+                                v-slot="{ values, errorMessage }"
+                                v-model="car.model"
+                                :validateOnChange="true"
+                                name="model"
+                            >
+                                <InputText
+                                    id="model"
+                                    v-model="car.model"
+                                    :invalid="!!errorMessage"
+                                    class="w-full"
+                                    placeholder="Golf 7"
+                                />
+                                <ErrorMessage
+                                    class="text-red-500 text-m mt-2"
+                                    name="model"
+                                />
+                            </Field>
+                        </div>
+
+                        <div class="col-span-6">
+                            <label class="block font-bold mb-3" for="marsh">{{
+                                t("marsh")
+                            }}</label>
+                            <Field
+                                v-slot="{ values, errorMessage }"
+                                v-model="car.marsh"
+                                :validateOnChange="true"
+                                name="marsh"
+                            >
+                                <Select
+                                    v-model="car.marsh"
+                                    :invalid="!!errorMessage"
+                                    :options="formattedCarTransmissions"
+                                    :placeholder="t('select-one')"
+                                    class="w-full"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                />
+                                <ErrorMessage
+                                    class="text-red-500 text-m mt-2"
+                                    name="marsh"
+                                />
+                            </Field>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-4">
+                        <div class="col-span-6">
+                            <label class="block font-bold mb-3" for="color">{{
+                                t("color")
+                            }}</label>
+                            <Field
+                                v-slot="{ values, errorMessage }"
+                                v-model="car.color"
+                                :validateOnChange="true"
+                                name="color"
+                            >
+                                <InputText
+                                    id="color"
+                                    v-model="car.color"
+                                    :invalid="!!errorMessage"
+                                    :placeholder="t('blue')"
+                                    class="w-full"
+                                />
+                                <ErrorMessage
+                                    class="text-red-500 text-m mt-2"
+                                    name="color"
+                                />
+                            </Field>
+                        </div>
+                        <div class="col-span-6">
+                            <label
+                                class="block font-bold mb-3"
+                                for="production_year"
+                                >{{ t("production") }}</label
+                            >
+                            <Field
+                                v-slot="{ values, errorMessage }"
+                                v-model="car.production_year"
+                                :validateOnChange="true"
+                                name="production_year"
+                            >
+                                <InputText
+                                    id="production_year"
+                                    v-model="car.production_year"
+                                    :invalid="!!errorMessage"
+                                    class="w-full"
+                                    placeholder="2015"
+                                />
+                                <ErrorMessage
+                                    class="text-red-500 text-m mt-2"
+                                    name="production_year"
+                                />
+                            </Field>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-4">
+                        <div class="col-span-6">
+                            <label class="block font-bold mb-3" for="target">{{
+                                t("target")
+                            }}</label>
+                            <Field
+                                v-slot="{ values, errorMessage }"
+                                v-model="car.target"
+                                :validateOnChange="true"
+                                name="target"
+                            >
+                                <InputText
+                                    id="target"
+                                    v-model="car.target"
+                                    :invalid="!!errorMessage"
+                                    class="w-full"
+                                    placeholder="05 999 AA"
+                                />
+                                <ErrorMessage
+                                    class="text-red-500 text-m mt-2"
+                                    name="target"
+                                />
+                            </Field>
+                        </div>
+                        <div class="col-span-6">
+                            <label class="block font-bold mb-3" for="shasi">{{
+                                t("shasi")
+                            }}</label>
+                            <Field
+                                v-slot="{ values, errorMessage }"
+                                v-model="car.shasi_nr"
+                                :validateOnChange="true"
+                                name="shasi_nr"
+                            >
+                                <InputText
+                                    id="shasi_nr"
+                                    v-model="car.shasi_nr"
+                                    :invalid="!!errorMessage"
+                                    class="w-full"
+                                    placeholder="WVWZZZAUZDP003950"
+                                />
+                                <ErrorMessage
+                                    class="text-red-500 text-m mt-2"
+                                    name="shasi_nr"
+                                />
+                            </Field>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-4">
+                        <div class="col-span-6">
+                            <label
+                                class="block font-bold mb-3"
+                                for="registration"
+                                >{{ t("registration") }}</label
+                            >
+                            <Field
+                                v-slot="{ values }"
+                                v-model="car.registration"
+                                :validateOnChange="true"
+                                name="registration"
+                            >
+                                <DatePicker
+                                    v-model="car.registration"
+                                    :showButtonBar="true"
+                                    :showIcon="true"
+                                    dateFormat="dd-mm-yy"
+                                    placeholder="dd-mm-yyyy"
+                                />
+                                <ErrorMessage
+                                    class="text-red-500 text-m mt-2"
+                                    name="registration"
+                                />
+                            </Field>
+                        </div>
+                        <div class="col-span-6">
+                            <label
+                                class="block font-bold mb-3"
+                                for="technical_control"
+                                >{{ t("technical-control") }} (<span
+                                    v-if="car.owner"
+                                >
+                                    {{ t("yearly") }}
+                                </span>
+                                <span v-else> {{ t("6-month") }} </span>)</label
+                            >
+                            <Field
+                                v-slot="{ values }"
+                                v-model="car.technical_control"
+                                :validateOnChange="true"
+                                name="technical_control"
+                            >
+                                <DatePicker
+                                    v-model="car.technical_control"
+                                    :showButtonBar="true"
+                                    :showIcon="true"
+                                    ateFormat="dd-mm-yy"
+                                    placeholder="dd-mm-yyyy"
+                                />
+                                <ErrorMessage
+                                    class="text-red-500 text-m mt-2"
+                                    name="technical_control"
+                                />
+                            </Field>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-4">
+                        <div class="col-span-6">
+                            <label class="block font-bold mb-3" for="owner">{{
+                                t("owner")
+                            }}</label>
+                            <Field
+                                v-slot="{ values }"
+                                v-model="car.owner"
+                                :validateOnChange="true"
+                                name="owner"
+                            >
+                                <InputText
+                                    id="owner"
+                                    v-model="car.owner"
+                                    :placeholder="t('owner-placeholder')"
+                                    class="w-full"
+                                />
+                                <ErrorMessage
+                                    class="text-red-500 text-m mt-2"
+                                    name="owner"
+                                />
+                            </Field>
+                        </div>
+                        <div class="col-span-6">
+                            <Message icon="pi pi-arrow-left" severity="info">{{
+                                t("owner-info")
+                            }}</Message>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold mb-3" for="comment">{{
+                            t("comment")
+                        }}</label>
+                        <Field
+                            v-slot="{ values }"
+                            v-model="car.comment"
+                            :validateOnChange="true"
+                            name="comment"
+                        >
+                            <Textarea
+                                id="comment"
+                                v-model="car.comment"
+                                class="w-full"
+                                cols="20"
+                                rows="3"
+                            />
+                            <ErrorMessage
+                                class="text-red-500 text-m mt-2"
+                                name="comment"
+                            />
+                        </Field>
+                    </div>
+                </div>
+                <div class="float-end mt-4">
+                    <Button
+                        :label="t('cancel')"
+                        icon="pi pi-times"
+                        text
+                        @click="(carUpdateDialog = false), (car = {})"
+                    />
+                    <Button
+                        :label="t('save')"
+                        class="ml-3.5"
+                        icon="pi pi-check"
+                        type="submit"
+                    />
+                </div>
+            </Form>
+            <!-- Add a clear div -->
+            <div style="clear: both"></div>
+            <Message
+                v-for="error in carUpdateError.response.data.errors"
+                v-if="carUpdateError?.status === 422"
+                class="mt-2 mb-2"
+                icon="pi pi-times-circle"
+                severity="error"
+            >
+                {{ error[0] }}
+            </Message>
+        </Dialog>
+        <!--   Create car dialog end     -->
+
+        <!--   Delete car dialog     -->
+        <Dialog
+            v-model:visible="deleteCarDialog"
+            :dismissableMask="true"
+            :header="t('confirm')"
+            :modal="true"
+            :style="{ width: '450px' }"
         >
             <div class="flex items-center gap-4">
                 <i class="pi pi-exclamation-triangle !text-3xl" />
                 <span v-if="product"
-                    >Are you sure you want to delete <b>{{ product.name }}</b
+                    >{{ t("are-sure-u-want-to-delete") }}:
+                    <b>{{ car.model }} - {{ car.color }}</b
                     >?</span
                 >
             </div>
             <template #footer>
                 <Button
-                    label="No"
+                    :label="t('no')"
                     icon="pi pi-times"
                     text
-                    @click="deleteProductDialog = false"
-                />
-                <Button label="Yes" icon="pi pi-check" @click="deleteProduct" />
-            </template>
-        </Dialog>
-
-        <Dialog
-            v-model:visible="deleteProductsDialog"
-            :style="{ width: '450px' }"
-            header="Confirm"
-            :modal="true"
-        >
-            <div class="flex items-center gap-4">
-                <i class="pi pi-exclamation-triangle !text-3xl" />
-                <span v-if="product"
-                    >Are you sure you want to delete the selected
-                    products?</span
-                >
-            </div>
-            <template #footer>
-                <Button
-                    label="No"
-                    icon="pi pi-times"
-                    text
-                    @click="deleteProductsDialog = false"
+                    @click="deleteCarDialog = false"
                 />
                 <Button
-                    label="Yes"
+                    :label="t('yes')"
                     icon="pi pi-check"
-                    text
-                    @click="deleteSelectedProducts"
+                    @click="handleDeleteCar"
                 />
             </template>
         </Dialog>
+        <!--   Delete car dialog end     -->
     </div>
 </template>

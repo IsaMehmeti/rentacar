@@ -1,12 +1,19 @@
 <script setup>
 import { useLayout } from "@/layout/composables/layout";
 import AppConfigurator from "./AppConfigurator.vue";
-import { onMounted, onBeforeMount } from "vue";
+import { onBeforeMount, watch } from "vue";
 import { useAuthStore } from "@/stores/authStore.js";
 import { useRouter } from "vue-router";
+import { ref } from "vue";
+import { useI18n } from "vue-i18n";
+import { useLocale } from "@/hooks/useLocale.js";
+import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
 
 const authStore = useAuthStore();
 const router = useRouter();
+const { t } = useI18n({ useScope: "global" });
+
+const menuVisible = ref(false);
 
 const { onMenuToggle, toggleDarkMode, executeDarkModeToggle, isDarkTheme } =
     useLayout();
@@ -31,8 +38,8 @@ onBeforeMount(() => {
                 <svg
                     version="1.0"
                     xmlns="http://www.w3.org/2000/svg"
-                    width="1334.000000pt"
-                    height="1334.000000pt"
+                    width="100%"
+                    height="100%"
                     viewBox="0 0 1334.000000 1334.000000"
                     preserveAspectRatio="xMidYMid meet"
                 >
@@ -559,12 +566,15 @@ l-3 22 -13 -23z"
                         />
                     </g>
                 </svg>
+
                 <span>Rent a Car Dushi</span>
             </router-link>
         </div>
 
         <div class="layout-topbar-actions">
             <div class="layout-config-menu">
+                <!-- Language Switcher -->
+                <LanguageSwitcher />
                 <button
                     type="button"
                     class="layout-topbar-action"

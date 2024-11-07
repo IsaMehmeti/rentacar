@@ -2,6 +2,7 @@
 import AppConfigurator from "@/layout/AppConfigurator.vue";
 import { useLayout } from "@/layout/composables/layout";
 import { onBeforeMount } from "vue";
+import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
 
 const { onMenuToggle, toggleDarkMode, isDarkTheme, executeDarkModeToggle } =
     useLayout();
@@ -16,6 +17,7 @@ onBeforeMount(() => {
 
 <template>
     <div class="fixed flex gap-4 top-8 right-8">
+        <LanguageSwitcher />
         <Button
             type="button"
             @click="toggleDarkMode"
