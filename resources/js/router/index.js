@@ -19,40 +19,25 @@ const routes = [
                 path: "/contracts",
                 name: "Contracts",
                 meta: { title: "registers", auth: true },
-                component: () =>
-                    import("@/views/pages/contracts/Contracts.vue"),
+                component: () => import("@/views/Registers.vue"),
             },
             {
                 path: "/contracts/create",
                 name: "Create Contract",
                 meta: { title: "add-contract", auth: true },
-                component: () =>
-                    import("@/views/pages/contracts/Contracts.vue"),
+                component: () => import("@/views/Registers.vue"),
             },
             {
                 path: "/clients",
                 name: "Clients",
                 meta: { title: "clients", auth: true },
-                component: () => import("@/views/pages/clients/Clients.vue"),
-            },
-            {
-                path: "/clients/create",
-                name: "Create Client",
-                meta: { title: "add-client", auth: true },
-                component: () =>
-                    import("@/views/pages/clients/ClientCreate.vue"),
+                component: () => import("@/views/Clients.vue"),
             },
             {
                 path: "/cars",
                 name: "Cars",
                 meta: { title: "cars", auth: true },
-                component: () => import("@/views/pages/cars/Cars.vue"),
-            },
-            {
-                path: "/cars/create",
-                name: "add-car",
-                meta: { title: "Shto Veturen", auth: true },
-                component: () => import("@/views/pages/cars/CarsCreate.vue"),
+                component: () => import("@/views/Cars.vue"),
             },
             {
                 path: "/uikit/formlayout",

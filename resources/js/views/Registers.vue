@@ -3,13 +3,10 @@ import { FilterMatchMode } from "@primevue/core/api";
 import { useToast } from "primevue/usetoast";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import { CarService } from "@/service/api/CarService.js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
 import { useI18n } from "vue-i18n";
-import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
-import * as yup from "yup";
-import { ErrorMessage, Field, Form } from "vee-validate";
 import { RegisterService } from "@/service/api/RegisterService.js";
+import CreateRegister from "@/components/CreateRegister.vue";
 
 const toast = useToast();
 const queryClient = useQueryClient();
@@ -20,40 +17,36 @@ const route = useRoute();
 const pageTitle = computed(() => t(route.meta.title));
 
 const dt = ref();
-const carDialog = ref(false);
+const registerCreateDialog = ref(false);
 const carUpdateDialog = ref(false);
 const submitted = ref(false);
-const deleteCarDialog = ref(false);
+const deleteRegisterDialog = ref(false);
 
-const product = ref({});
+//car and client for popover
 const car = ref({});
+const client = ref({});
+
+const register = ref({});
+const carPopover = ref(null);
+const clientPopover = ref(null);
 const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
-const carCreateForm = ref(null);
-const carTransmissions = ref(["automatik", "manual"]);
 
-const formattedCarTransmissions = computed(() =>
-    carTransmissions.value.map((transmission) => ({
-        label: transmission, // This is what the user sees in the dropdown
-        value: transmission, // This is the actual value set in `car.marsh`
-    })),
-);
-
-// list cars
+// list registers
 const { isFetching, isError, data, error, refetch } = useQuery({
     queryKey: ["registers"],
     queryFn: async () => (await RegisterService.list()).data,
 });
 
-//delete car
-const { mutate: deleteCar, isPending: isDeleting } = useMutation({
+//delete register
+const { mutate: deleteRegister, isPending: isDeleting } = useMutation({
     mutationFn: async (id) => {
-        await CarService.delete(id);
+        await RegisterService.delete(id);
     },
     onSuccess: async () => {
-        const id = car.value.id;
-        queryClient.setQueryData(["cars"], (oldData) => {
+        const id = register.value.id;
+        queryClient.setQueryData(["registers"], (oldData) => {
             const newData = [...oldData];
             newData.splice(
                 data.value.findIndex((c) => c.id === id),
@@ -61,145 +54,78 @@ const { mutate: deleteCar, isPending: isDeleting } = useMutation({
             );
             return newData;
         });
-        toast.add({
-            severity: "success",
-            summary: t("success"),
-            detail: $("delete-success"),
-            life: 3000,
-        });
-        car.value = {};
+
+        register.value = {};
     },
     onError: (error) => {
-        toast.add({
-            severity: "error",
-            summary: "Error",
-            detail: $("went-wrong"),
-            life: 3000,
-        });
         console.log(error);
-        car.value = {};
+        register.value = {};
     },
 });
 
-// create car
+// print register
 const {
-    mutate: storeNewCar,
-    isError: carStoreIsError,
-    error: carStoreError,
+    mutate: printRegister,
+    isError: registerStoreIsError,
+    error: registerStoreError,
 } = useMutation({
-    mutationKey: ["cars", car],
+    mutationKey: ["register-print", register],
     cacheTime: 0,
     staleTime: 0,
     mutationFn: async () => {
-        return await CarService.store(car.value);
+        return await RegisterService.print(register.value.id);
     },
     onError: (e) => {
-        toast.add({
-            severity: "error",
-            summary: "Error",
-            detail: $("went-wrong"),
-            life: 3000,
-        });
         console.log(error);
     },
     onSuccess: (data) => {
-        // queryClient.setQueryData(["cars"], (oldData) => {
-        //     return [...oldData, data?.data?.data];
-        // });
-        car.value = {};
-        carDialog.value = false;
-        refetch();
+        const blob = new Blob([data.data], { type: "application/pdf" });
+        const fileURL = window.URL.createObjectURL(blob);
+
+        const iframe = document.createElement("iframe");
+        document.body.appendChild(iframe);
+
+        iframe.style.display = "none";
+        iframe.src = fileURL;
+        iframe.onload = function () {
+            setTimeout(function () {
+                iframe.focus();
+                iframe.contentWindow.print();
+            }, 1);
+        };
     },
 });
 
-// update car
-const {
-    mutate: updateCar,
-    isError: carUpdateIsError,
-    error: carUpdateError,
-} = useMutation({
-    mutationKey: ["cars-update", car],
-    cacheTime: 0,
-    staleTime: 0,
-    mutationFn: async () => {
-        return await CarService.update(car.value, car.value.id);
-    },
-    onError: (e) => {
-        toast.add({
-            severity: "error",
-            summary: "Error",
-            detail: $("went-wrong"),
-            life: 3000,
-        });
-        console.log(error);
-    },
-    onSuccess: (data) => {
-        // queryClient.setQueryData(["cars"], (oldData) => {
-        //     return [...oldData, data?.data?.data];
-        // });
-        car.value = {};
-        carUpdateDialog.value = false;
-        refetch();
-    },
-});
-
-function confirmDeleteCar(selectedCar) {
+function openCarPopover(event, selectedCar) {
+    carPopover.value.toggle(event);
     car.value = selectedCar;
-    deleteCarDialog.value = true;
+}
+function openClientPopover(event, selectedClient) {
+    clientPopover.value.toggle(event);
+    client.value = selectedClient;
 }
 
-function handleDeleteCar() {
-    deleteCarDialog.value = false;
-    //delete car method we get from useMutation
-    deleteCar(car.value.id);
+function confirmDeleteCar(selectedRegister) {
+    register.value = selectedRegister;
+    deleteRegisterDialog.value = true;
 }
+
+function handleDeleteRegister() {
+    deleteRegisterDialog.value = false;
+    //delete car method we get from useMutation
+    deleteRegister(register.value.id);
+}
+
+// handle print register
+const handlePrintRegister = (selectedRegister) => {
+    register.value = selectedRegister;
+    printRegister();
+};
 
 // open create car modal
-function openNew() {
-    car.value = {};
-    submitted.value = false;
-    carDialog.value = true;
+function createNewRegister() {
+    registerCreateDialog.value = true;
 }
-function editCar(selectedCar) {
-    car.value = { ...selectedCar };
-    carUpdateDialog.value = true;
-}
-
-function hideCreateCarDialog() {
-    carDialog.value = false;
-}
-
-const schema = ref(createSchema(t)); // Initialize schema with the current locale
-
-function createSchema(t) {
-    return yup.object({
-        model: yup
-            .string()
-            .required(t("validation.required", { field: t("model") })),
-        marsh: yup
-            .string()
-            .required(t("validation.required", { field: t("marsh") })),
-        production_year: yup
-            .number()
-            .required(t("validation.required", { field: t("production") })),
-        target: yup
-            .string()
-            .required(t("validation.required", { field: t("target") })),
-        shasi_nr: yup
-            .string()
-            .required(t("validation.required", { field: t("shasi") })),
-        color: yup
-            .string()
-            .required(t("validation.required", { field: t("color") })),
-        comment: yup.string().nullable(),
-        technical_control: yup.date().nullable(),
-        registration: yup.date().nullable(),
-    });
-}
-// Watching for changes in the locale to recreate the schema when translation occurs
-watch(locale, () => {
-    schema.value = createSchema(t);
-});
 </script>
 
 <template>
@@ -211,7 +137,7 @@ watch(locale, () => {
             <DataTable
                 v-if="!isError"
                 ref="dt"
-                :currentPageReportTemplate="`${t('displaying')} {first} ${t('to')} {last} ${t('from')} {totalRecords} ${t('cars')}`"
+                :currentPageReportTemplate="`${t('displaying')} {first} ${t('to')} {last} ${t('from')} {totalRecords} ${t('registers')}`"
                 :filters="filters"
                 :loading="isFetching || isDeleting"
                 :paginator="true"
@@ -232,7 +158,7 @@ watch(locale, () => {
                             class="mr-2"
                             icon="pi pi-plus"
                             severity="secondary"
-                            @click="openNew"
+                            @click="createNewRegister"
                         />
                         <IconField>
                             <InputIcon>
@@ -245,9 +171,211 @@ watch(locale, () => {
                         </IconField>
                     </div>
                 </template>
+                <Column
+                    :header="t('start-date')"
+                    field="start_date"
+                    style="min-width: 10rem; text-align: center"
+                    sortable
+                >
+                    <template #body="slotProps">
+                        <Chip>
+                            {{ slotProps.data.start_date }}
+                            <span class="text-primary">
+                                {{ slotProps.data.created_time?.time }}
+                            </span>
+                        </Chip>
+                    </template>
+                </Column>
+                <Column
+                    :header="t('end-date')"
+                    field="end_date"
+                    style="min-width: 10rem; text-align: center"
+                    sortable
+                >
+                    <template #body="slotProps">
+                        <Chip>
+                            {{ slotProps.data.end_date }}
+                            <span class="text-primary">
+                                {{ slotProps.data.created_time?.time }}
+                            </span>
+                        </Chip>
+                    </template>
+                </Column>
+                <Column
+                    :header="t('status')"
+                    field="status"
+                    style="min-width: 3rem; text-align: center"
+                    sortable
+                >
+                    <template #body="slotProps">
+                        <Tag
+                            v-show="slotProps.data.status === 'in_progress'"
+                            severity="warn"
+                        >
+                            <i
+                                v-tooltip="t('in-progress')"
+                                class="pi pi-spinner spinner"
+                                style="font-size: 2rem"
+                        /></Tag>
+                        <Tag
+                            v-show="slotProps.data.status === 'completed'"
+                            severity="success"
+                        >
+                            <i
+                                v-tooltip="t('completed')"
+                                class="pi pi-check-circle text-green-700"
+                                style="font-size: 2rem"
+                            />
+                        </Tag>
+                        <Tag
+                            v-show="slotProps.data.status === 'pending'"
+                            severity="info"
+                        >
+                            <i
+                                v-tooltip="t('pending')"
+                                class="pi pi-clock"
+                                style="font-size: 2rem"
+                            />
+                        </Tag>
+                    </template>
+                </Column>
+                <Column
+                    :header="t('the-client')"
+                    field="client.full_name"
+                    sortable
+                    style="min-width: 10rem"
+                >
+                    <template #body="slotProps">
+                        <Button
+                            v-if="slotProps.data.client"
+                            link
+                            :label="`${slotProps.data.client.full_name}`"
+                            @click="
+                                (event) =>
+                                    openClientPopover(
+                                        event,
+                                        slotProps.data.client,
+                                    )
+                            "
+                        />
+                        <Popover
+                            ref="clientPopover"
+                            id="overlay_panel"
+                            style="width: 250px"
+                        >
+                            <p class="font-bold text-xl">
+                                {{ client.full_name }}
+                            </p>
+                            <br />
+                            <p>
+                                <span class="font-bold">{{ t("address") }}</span
+                                >: {{ client.address }}
+                            </p>
+
+                            <p v-if="client.phone">
+                                <span class="font-bold">{{ t("phone") }}</span
+                                >: {{ client.phone }}
+                            </p>
+                            <p v-if="client.passaport_nr">
+                                <span class="font-bold">{{
+                                    t("passport_nr")
+                                }}</span
+                                >: {{ client.passaport_nr }}
+                            </p>
+                            <p v-if="client.id_card">
+                                <span class="font-bold">{{ t("id_card") }}</span
+                                >: {{ client.id_card }}
+                            </p>
+                            <p v-if="client.birth">
+                                <span class="font-bold">{{ t("birth") }}</span
+                                >:
+                                {{ client.birth }}
+                            </p>
+                            <p v-if="client.birthplace">
+                                <span class="font-bold">{{
+                                    t("birthplace")
+                                }}</span
+                                >:
+                                {{ client.birthplace }}
+                            </p>
+                            <p v-if="client.drivers_license_id">
+                                <span class="font-bold">{{
+                                    t("drivers-license")
+                                }}</span
+                                >:
+                                {{ client.drivers_license_id }}
+                            </p>
+                        </Popover>
+                    </template>
+                </Column>
+                <Column
+                    :header="t('the-car')"
+                    field="car.model"
+                    sortable
+                    style="min-width: 16rem"
+                >
+                    <template #body="slotProps">
+                        <Button
+                            v-if="slotProps.data.car"
+                            link
+                            :label="`${slotProps.data.car.model} - ${slotProps.data.car.color} ${slotProps.data.car.marsh}`"
+                            variant="link"
+                            @click="
+                                (event) =>
+                                    openCarPopover(event, slotProps.data.car)
+                            "
+                        />
+                        <Popover
+                            ref="carPopover"
+                            id="overlay_panel"
+                            style="width: 250px"
+                        >
+                            <p class="font-bold text-xl">
+                                {{ car.model }} - {{ car.color }}
+                                {{ car.marsh }}
+                            </p>
+                            <br />
+                            <p>
+                                <span class="font-bold">{{
+                                    t("production")
+                                }}</span
+                                >: {{ car.production_year }}
+                            </p>
+                            <p>
+                                <span class="font-bold">{{ t("target") }}</span
+                                >: {{ car.target }}
+                            </p>
+                            <p>
+                                <span class="font-bold">{{
+                                    t("registration")
+                                }}</span
+                                >: {{ car.registration }}
+                            </p>
+                            <p>
+                                <span class="font-bold">{{
+                                    t("technical-control")
+                                }}</span
+                                >:
+                                {{ car.technical_control }}
+                            </p>
+                            <p>
+                                <span class="font-bold">{{ t("shasi") }}</span
+                                >:
+                                {{ car.shasi_nr }}
+                            </p>
+                        </Popover>
+                    </template>
+                </Column>
 
                 <Column :exportable="false" style="min-width: 12rem">
                     <template #body="slotProps">
+                        <Button
+                            class="mr-2"
+                            icon="pi pi-print"
+                            outlined
+                            rounded
+                            @click="handlePrintRegister(slotProps.data)"
+                        />
                         <Button
                             class="mr-2"
                             icon="pi pi-pencil"
@@ -255,11 +383,11 @@ watch(locale, () => {
                             rounded
                             @click="editCar(slotProps.data)"
                         />
+
                         <Button
                             icon="pi pi-trash"
                             outlined
                             rounded
-                            severity="danger"
                             @click="confirmDeleteCar(slotProps.data)"
                         />
                     </template>
@@ -275,638 +403,18 @@ watch(locale, () => {
         </div>
         <!--   List car table end     -->
 
-        <!--   Create car dialog start     -->
+        <!--   Create register dialog start     -->
+        <CreateRegister
+            v-model:visible="registerCreateDialog"
+            :client="false"
+            @update:visible="registerCreateDialog = $event"
+            @save="refetch"
+        />
+        <!--   Create register dialog end     -->
+
+        <!--   Delete register dialog     -->
         <Dialog
-            v-model:visible="carDialog"
-            :dismissableMask="true"
-            :modal="true"
-            :style="{ width: '500px' }"
-        >
-            <template #header>
-                <div class="flex justify-between items-center w-full">
-                    <span class="text-xl font-bold">{{ t("add-car") }}</span>
-                    <div class="flex items-center gap-2">
-                        <LanguageSwitcher />
-                    </div>
-                </div>
-            </template>
-            <Form
-                ref="carCreateForm"
-                :validation-schema="schema"
-                @submit="storeNewCar"
-            >
-                <div class="flex flex-col gap-6">
-                    <div class="grid grid-cols-12 gap-4">
-                        <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="model">{{
-                                t("model")
-                            }}</label>
-                            <Field
-                                v-slot="{ values, errorMessage }"
-                                v-model="car.model"
-                                :validateOnChange="true"
-                                name="model"
-                            >
-                                <InputText
-                                    id="model"
-                                    v-model="car.model"
-                                    :invalid="!!errorMessage"
-                                    class="w-full"
-                                    placeholder="Golf 7"
-                                />
-                                <ErrorMessage
-                                    class="text-red-500 text-m mt-2"
-                                    name="model"
-                                />
-                            </Field>
-                        </div>
-
-                        <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="marsh">{{
-                                t("marsh")
-                            }}</label>
-                            <Field
-                                v-slot="{ values, errorMessage }"
-                                v-model="car.marsh"
-                                :validateOnChange="true"
-                                name="marsh"
-                            >
-                                <Select
-                                    v-model="car.marsh"
-                                    :invalid="!!errorMessage"
-                                    :options="formattedCarTransmissions"
-                                    :placeholder="t('select-one')"
-                                    class="w-full"
-                                    optionLabel="label"
-                                    optionValue="value"
-                                />
-                                <ErrorMessage
-                                    class="text-red-500 text-m mt-2"
-                                    name="marsh"
-                                />
-                            </Field>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-12 gap-4">
-                        <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="color">{{
-                                t("color")
-                            }}</label>
-                            <Field
-                                v-slot="{ values, errorMessage }"
-                                v-model="car.color"
-                                :validateOnChange="true"
-                                name="color"
-                            >
-                                <InputText
-                                    id="color"
-                                    v-model="car.color"
-                                    :invalid="!!errorMessage"
-                                    :placeholder="t('blue')"
-                                    class="w-full"
-                                />
-                                <ErrorMessage
-                                    class="text-red-500 text-m mt-2"
-                                    name="color"
-                                />
-                            </Field>
-                        </div>
-                        <div class="col-span-6">
-                            <label
-                                class="block font-bold mb-3"
-                                for="production_year"
-                                >{{ t("production") }}</label
-                            >
-                            <Field
-                                v-slot="{ values, errorMessage }"
-                                v-model="car.production_year"
-                                :validateOnChange="true"
-                                name="production_year"
-                            >
-                                <InputText
-                                    id="production_year"
-                                    v-model="car.production_year"
-                                    :invalid="!!errorMessage"
-                                    class="w-full"
-                                    placeholder="2015"
-                                />
-                                <ErrorMessage
-                                    class="text-red-500 text-m mt-2"
-                                    name="production_year"
-                                />
-                            </Field>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-12 gap-4">
-                        <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="target">{{
-                                t("target")
-                            }}</label>
-                            <Field
-                                v-slot="{ values, errorMessage }"
-                                v-model="car.target"
-                                :validateOnChange="true"
-                                name="target"
-                            >
-                                <InputText
-                                    id="target"
-                                    v-model="car.target"
-                                    :invalid="!!errorMessage"
-                                    class="w-full"
-                                    placeholder="05 999 AA"
-                                />
-                                <ErrorMessage
-                                    class="text-red-500 text-m mt-2"
-                                    name="target"
-                                />
-                            </Field>
-                        </div>
-                        <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="shasi">{{
-                                t("shasi")
-                            }}</label>
-                            <Field
-                                v-slot="{ values, errorMessage }"
-                                v-model="car.shasi_nr"
-                                :validateOnChange="true"
-                                name="shasi_nr"
-                            >
-                                <InputText
-                                    id="shasi_nr"
-                                    v-model="car.shasi_nr"
-                                    :invalid="!!errorMessage"
-                                    class="w-full"
-                                    placeholder="WVWZZZAUZDP003950"
-                                />
-                                <ErrorMessage
-                                    class="text-red-500 text-m mt-2"
-                                    name="shasi_nr"
-                                />
-                            </Field>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-12 gap-4">
-                        <div class="col-span-6">
-                            <label
-                                class="block font-bold mb-3"
-                                for="registration"
-                                >{{ t("registration") }}</label
-                            >
-                            <Field
-                                v-slot="{ values }"
-                                v-model="car.registration"
-                                :validateOnChange="true"
-                                name="registration"
-                            >
-                                <DatePicker
-                                    v-model="car.registration"
-                                    :showButtonBar="true"
-                                    :showIcon="true"
-                                    dateFormat="dd-mm-yy"
-                                    placeholder="dd-mm-yyyy"
-                                />
-                                <ErrorMessage
-                                    class="text-red-500 text-m mt-2"
-                                    name="registration"
-                                />
-                            </Field>
-                        </div>
-                        <div class="col-span-6">
-                            <label
-                                class="block font-bold mb-3"
-                                for="technical_control"
-                                icon="pi pi-arrow-left"
-                                >{{ t("technical-control") }} (<span
-                                    v-if="car.owner"
-                                >
-                                    {{ t("yearly") }}
-                                </span>
-                                <span v-else> {{ t("6-month") }} </span>)
-                            </label>
-                            <Field
-                                v-slot="{ values }"
-                                v-model="car.technical_control"
-                                :validateOnChange="true"
-                                name="technical_control"
-                            >
-                                <DatePicker
-                                    v-model="car.technical_control"
-                                    :showButtonBar="true"
-                                    :showIcon="true"
-                                    ateFormat="dd-mm-yy"
-                                    placeholder="dd-mm-yyyy"
-                                />
-                                <ErrorMessage
-                                    class="text-red-500 text-m mt-2"
-                                    name="technical_control"
-                                />
-                            </Field>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-12 gap-4">
-                        <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="owner">{{
-                                t("owner")
-                            }}</label>
-                            <Field
-                                v-slot="{ values }"
-                                v-model="car.owner"
-                                :validateOnChange="true"
-                                name="owner"
-                            >
-                                <InputText
-                                    id="owner"
-                                    v-model="car.owner"
-                                    :placeholder="t('owner-placeholder')"
-                                    class="w-full"
-                                />
-                                <ErrorMessage
-                                    class="text-red-500 text-m mt-2"
-                                    name="registration"
-                                />
-                            </Field>
-                        </div>
-                        <div class="col-span-6">
-                            <Message icon="pi pi-arrow-left" severity="info">{{
-                                t("owner-info")
-                            }}</Message>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block font-bold mb-3" for="comment">{{
-                            t("comment")
-                        }}</label>
-                        <Field
-                            v-slot="{ values }"
-                            v-model="car.comment"
-                            :validateOnChange="true"
-                            name="comment"
-                        >
-                            <Textarea
-                                id="comment"
-                                v-model="car.comment"
-                                class="w-full"
-                                cols="20"
-                                rows="3"
-                            />
-                            <ErrorMessage
-                                class="text-red-500 text-m mt-2"
-                                name="comment"
-                            />
-                        </Field>
-                    </div>
-                </div>
-                <div class="float-end mt-4">
-                    <Button
-                        :label="t('cancel')"
-                        icon="pi pi-times"
-                        text
-                        @click="hideCreateCarDialog"
-                    />
-                    <Button
-                        :label="t('save')"
-                        class="ml-3.5"
-                        icon="pi pi-check"
-                        type="submit"
-                    />
-                </div>
-            </Form>
-            <!-- Add a clear div -->
-            <div style="clear: both"></div>
-            <Message
-                v-for="error in carStoreError.response.data.errors"
-                v-if="carStoreError?.status === 422"
-                class="mt-2 mb-2"
-                icon="pi pi-times-circle"
-                severity="error"
-            >
-                {{ error[0] }}
-            </Message>
-        </Dialog>
-        <!--   Create car dialog end     -->
-
-        <!--   Update car dialog start     -->
-        <Dialog
-            v-model:visible="carUpdateDialog"
-            :dismissableMask="true"
-            :modal="true"
-            :style="{ width: '500px' }"
-        >
-            <template #header>
-                <div class="flex justify-between items-center w-full">
-                    <span class="text-xl font-bold">{{ t("update-car") }}</span>
-                    <div class="flex items-center gap-2">
-                        <LanguageSwitcher />
-                    </div>
-                </div>
-            </template>
-            <Form
-                ref="carCreateForm"
-                :validation-schema="schema"
-                @submit="updateCar"
-            >
-                <div class="flex flex-col gap-6">
-                    <div class="grid grid-cols-12 gap-4">
-                        <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="model">{{
-                                t("model")
-                            }}</label>
-                            <Field
-                                v-slot="{ values, errorMessage }"
-                                v-model="car.model"
-                                :validateOnChange="true"
-                                name="model"
-                            >
-                                <InputText
-                                    id="model"
-                                    v-model="car.model"
-                                    :invalid="!!errorMessage"
-                                    class="w-full"
-                                    placeholder="Golf 7"
-                                />
-                                <ErrorMessage
-                                    class="text-red-500 text-m mt-2"
-                                    name="model"
-                                />
-                            </Field>
-                        </div>
-
-                        <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="marsh">{{
-                                t("marsh")
-                            }}</label>
-                            <Field
-                                v-slot="{ values, errorMessage }"
-                                v-model="car.marsh"
-                                :validateOnChange="true"
-                                name="marsh"
-                            >
-                                <Select
-                                    v-model="car.marsh"
-                                    :invalid="!!errorMessage"
-                                    :options="formattedCarTransmissions"
-                                    :placeholder="t('select-one')"
-                                    class="w-full"
-                                    optionLabel="label"
-                                    optionValue="value"
-                                />
-                                <ErrorMessage
-                                    class="text-red-500 text-m mt-2"
-                                    name="marsh"
-                                />
-                            </Field>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-12 gap-4">
-                        <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="color">{{
-                                t("color")
-                            }}</label>
-                            <Field
-                                v-slot="{ values, errorMessage }"
-                                v-model="car.color"
-                                :validateOnChange="true"
-                                name="color"
-                            >
-                                <InputText
-                                    id="color"
-                                    v-model="car.color"
-                                    :invalid="!!errorMessage"
-                                    :placeholder="t('blue')"
-                                    class="w-full"
-                                />
-                                <ErrorMessage
-                                    class="text-red-500 text-m mt-2"
-                                    name="color"
-                                />
-                            </Field>
-                        </div>
-                        <div class="col-span-6">
-                            <label
-                                class="block font-bold mb-3"
-                                for="production_year"
-                                >{{ t("production") }}</label
-                            >
-                            <Field
-                                v-slot="{ values, errorMessage }"
-                                v-model="car.production_year"
-                                :validateOnChange="true"
-                                name="production_year"
-                            >
-                                <InputText
-                                    id="production_year"
-                                    v-model="car.production_year"
-                                    :invalid="!!errorMessage"
-                                    class="w-full"
-                                    placeholder="2015"
-                                />
-                                <ErrorMessage
-                                    class="text-red-500 text-m mt-2"
-                                    name="production_year"
-                                />
-                            </Field>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-12 gap-4">
-                        <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="target">{{
-                                t("target")
-                            }}</label>
-                            <Field
-                                v-slot="{ values, errorMessage }"
-                                v-model="car.target"
-                                :validateOnChange="true"
-                                name="target"
-                            >
-                                <InputText
-                                    id="target"
-                                    v-model="car.target"
-                                    :invalid="!!errorMessage"
-                                    class="w-full"
-                                    placeholder="05 999 AA"
-                                />
-                                <ErrorMessage
-                                    class="text-red-500 text-m mt-2"
-                                    name="target"
-                                />
-                            </Field>
-                        </div>
-                        <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="shasi">{{
-                                t("shasi")
-                            }}</label>
-                            <Field
-                                v-slot="{ values, errorMessage }"
-                                v-model="car.shasi_nr"
-                                :validateOnChange="true"
-                                name="shasi_nr"
-                            >
-                                <InputText
-                                    id="shasi_nr"
-                                    v-model="car.shasi_nr"
-                                    :invalid="!!errorMessage"
-                                    class="w-full"
-                                    placeholder="WVWZZZAUZDP003950"
-                                />
-                                <ErrorMessage
-                                    class="text-red-500 text-m mt-2"
-                                    name="shasi_nr"
-                                />
-                            </Field>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-12 gap-4">
-                        <div class="col-span-6">
-                            <label
-                                class="block font-bold mb-3"
-                                for="registration"
-                                >{{ t("registration") }}</label
-                            >
-                            <Field
-                                v-slot="{ values }"
-                                v-model="car.registration"
-                                :validateOnChange="true"
-                                name="registration"
-                            >
-                                <DatePicker
-                                    v-model="car.registration"
-                                    :showButtonBar="true"
-                                    :showIcon="true"
-                                    dateFormat="dd-mm-yy"
-                                    placeholder="dd-mm-yyyy"
-                                />
-                                <ErrorMessage
-                                    class="text-red-500 text-m mt-2"
-                                    name="registration"
-                                />
-                            </Field>
-                        </div>
-                        <div class="col-span-6">
-                            <label
-                                class="block font-bold mb-3"
-                                for="technical_control"
-                                >{{ t("technical-control") }} (<span
-                                    v-if="car.owner"
-                                >
-                                    {{ t("yearly") }}
-                                </span>
-                                <span v-else> {{ t("6-month") }} </span>)</label
-                            >
-                            <Field
-                                v-slot="{ values }"
-                                v-model="car.technical_control"
-                                :validateOnChange="true"
-                                name="technical_control"
-                            >
-                                <DatePicker
-                                    v-model="car.technical_control"
-                                    :showButtonBar="true"
-                                    :showIcon="true"
-                                    ateFormat="dd-mm-yy"
-                                    placeholder="dd-mm-yyyy"
-                                />
-                                <ErrorMessage
-                                    class="text-red-500 text-m mt-2"
-                                    name="technical_control"
-                                />
-                            </Field>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-12 gap-4">
-                        <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="owner">{{
-                                t("owner")
-                            }}</label>
-                            <Field
-                                v-slot="{ values }"
-                                v-model="car.owner"
-                                :validateOnChange="true"
-                                name="owner"
-                            >
-                                <InputText
-                                    id="owner"
-                                    v-model="car.owner"
-                                    :placeholder="t('owner-placeholder')"
-                                    class="w-full"
-                                />
-                                <ErrorMessage
-                                    class="text-red-500 text-m mt-2"
-                                    name="owner"
-                                />
-                            </Field>
-                        </div>
-                        <div class="col-span-6">
-                            <Message icon="pi pi-arrow-left" severity="info">{{
-                                t("owner-info")
-                            }}</Message>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block font-bold mb-3" for="comment">{{
-                            t("comment")
-                        }}</label>
-                        <Field
-                            v-slot="{ values }"
-                            v-model="car.comment"
-                            :validateOnChange="true"
-                            name="comment"
-                        >
-                            <Textarea
-                                id="comment"
-                                v-model="car.comment"
-                                class="w-full"
-                                cols="20"
-                                rows="3"
-                            />
-                            <ErrorMessage
-                                class="text-red-500 text-m mt-2"
-                                name="comment"
-                            />
-                        </Field>
-                    </div>
-                </div>
-                <div class="float-end mt-4">
-                    <Button
-                        :label="t('cancel')"
-                        icon="pi pi-times"
-                        text
-                        @click="(carUpdateDialog = false), (car = {})"
-                    />
-                    <Button
-                        :label="t('save')"
-                        class="ml-3.5"
-                        icon="pi pi-check"
-                        type="submit"
-                    />
-                </div>
-            </Form>
-            <!-- Add a clear div -->
-            <div style="clear: both"></div>
-            <Message
-                v-for="error in carUpdateError.response.data.errors"
-                v-if="carUpdateError?.status === 422"
-                class="mt-2 mb-2"
-                icon="pi pi-times-circle"
-                severity="error"
-            >
-                {{ error[0] }}
-            </Message>
-        </Dialog>
-        <!--   Create car dialog end     -->
-
-        <!--   Delete car dialog     -->
-        <Dialog
-            v-model:visible="deleteCarDialog"
+            v-model:visible="deleteRegisterDialog"
             :dismissableMask="true"
             :header="t('confirm')"
             :modal="true"
@@ -914,10 +422,13 @@ watch(locale, () => {
         >
             <div class="flex items-center gap-4">
                 <i class="pi pi-exclamation-triangle !text-3xl" />
-                <span v-if="product"
-                    >{{ t("are-sure-u-want-to-delete") }}:
-                    <b>{{ car.model }} - {{ car.color }}</b
-                    >?</span
+                <span v-if="register"
+                    >{{ t("are-sure-u-want-to-delete") }}
+                    {{ t("the-register") }} <br />
+                    {{ t("the-client") }}: {{ register.client?.full_name }}
+                    <br />
+                    {{ t("the-car") }}: {{ register.car?.color }}
+                    {{ register.car?.marsh }} ?</span
                 >
             </div>
             <template #footer>
@@ -925,15 +436,30 @@ watch(locale, () => {
                     :label="t('no')"
                     icon="pi pi-times"
                     text
-                    @click="deleteCarDialog = false"
+                    @click="deleteRegisterDialog = false"
                 />
                 <Button
                     :label="t('yes')"
                     icon="pi pi-check"
-                    @click="handleDeleteCar"
+                    @click="handleDeleteRegister"
                 />
             </template>
         </Dialog>
-        <!--   Delete car dialog end     -->
+        <!--   Delete register dialog end     -->
     </div>
 </template>
+
+<style>
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+</style>

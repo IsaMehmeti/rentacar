@@ -41,8 +41,14 @@ const {
 });
 
 const schema = yup.object({
-    email: yup.string().required().email(),
-    password: yup.string().required().min(8),
+    email: yup
+        .string()
+        .required(t("validation.required", { field: "Email" }))
+        .email(t("validation.email")),
+    password: yup
+        .string()
+        .required(t("validation.required", { field: "Password" }))
+        .min(8, t("validation.min", { min: 8 })),
 });
 </script>
 

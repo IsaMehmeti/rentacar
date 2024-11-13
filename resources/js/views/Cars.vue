@@ -7,8 +7,9 @@ import { CarService } from "@/service/api/CarService.js";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
 import { useI18n } from "vue-i18n";
 import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
-import * as yup from "yup";
 import { ErrorMessage, Field, Form } from "vee-validate";
+import createCarSchema from "@/schemas/carSchema.js";
+import Label from "@/components/Label.vue";
 
 const toast = useToast();
 const queryClient = useQueryClient();
@@ -168,36 +169,11 @@ function hideCreateCarDialog() {
     carDialog.value = false;
 }
 
-const schema = ref(createSchema(t)); // Initialize schema with the current locale
+const schema = ref(createCarSchema(t)); // Initialize schema with the current locale
 
-function createSchema(t) {
-    return yup.object({
-        model: yup
-            .string()
-            .required(t("validation.required", { field: t("model") })),
-        marsh: yup
-            .string()
-            .required(t("validation.required", { field: t("marsh") })),
-        production_year: yup
-            .number()
-            .required(t("validation.required", { field: t("production") })),
-        target: yup
-            .string()
-            .required(t("validation.required", { field: t("target") })),
-        shasi_nr: yup
-            .string()
-            .required(t("validation.required", { field: t("shasi") })),
-        color: yup
-            .string()
-            .required(t("validation.required", { field: t("color") })),
-        comment: yup.string().nullable(),
-        technical_control: yup.date().nullable(),
-        registration: yup.date().nullable(),
-    });
-}
 // Watching for changes in the locale to recreate the schema when translation occurs
 watch(locale, () => {
-    schema.value = createSchema(t);
+    schema.value = createCarSchema(t);
 });
 </script>
 
@@ -261,13 +237,20 @@ watch(locale, () => {
                     :header="t('target')"
                     field="target"
                     sortable
-                    style="min-width: 16rem"
-                ></Column>
+                    style="min-width: 8rem; text-align: center"
+                >
+                    <template #body="slotProps">
+                        <Chip>
+                            {{ slotProps.data.target }}
+                        </Chip>
+                    </template>
+                </Column>
                 <Column
                     :header="t('registration')"
                     field="registration"
                     sortable
-                    style="min-width: 16rem"
+                    class="text-lg tracking-wide"
+                    style="min-width: 10rem; text-align: center"
                 >
                     <template #body="slotProps">
                         <Tag
@@ -287,7 +270,8 @@ watch(locale, () => {
                     :header="t('technical-control')"
                     field="technical_control"
                     sortable
-                    style="min-width: 16rem"
+                    class="text-lg tracking-wide"
+                    style="min-width: 8rem; text-align: center"
                 >
                     <template #body="slotProps">
                         <Tag
@@ -356,9 +340,7 @@ watch(locale, () => {
                 <div class="flex flex-col gap-6">
                     <div class="grid grid-cols-12 gap-4">
                         <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="model">{{
-                                t("model")
-                            }}</label>
+                            <Label required for="model">{{ t("model") }}</Label>
                             <Field
                                 v-slot="{ values, errorMessage }"
                                 v-model="car.model"
@@ -380,9 +362,7 @@ watch(locale, () => {
                         </div>
 
                         <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="marsh">{{
-                                t("marsh")
-                            }}</label>
+                            <Label required for="marsh">{{ t("marsh") }}</Label>
                             <Field
                                 v-slot="{ values, errorMessage }"
                                 v-model="car.marsh"
@@ -408,9 +388,7 @@ watch(locale, () => {
 
                     <div class="grid grid-cols-12 gap-4">
                         <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="color">{{
-                                t("color")
-                            }}</label>
+                            <Label required for="color">{{ t("color") }}</Label>
                             <Field
                                 v-slot="{ values, errorMessage }"
                                 v-model="car.color"
@@ -431,11 +409,9 @@ watch(locale, () => {
                             </Field>
                         </div>
                         <div class="col-span-6">
-                            <label
-                                class="block font-bold mb-3"
-                                for="production_year"
-                                >{{ t("production") }}</label
-                            >
+                            <Label required for="production_year">{{
+                                t("production")
+                            }}</Label>
                             <Field
                                 v-slot="{ values, errorMessage }"
                                 v-model="car.production_year"
@@ -459,9 +435,9 @@ watch(locale, () => {
 
                     <div class="grid grid-cols-12 gap-4">
                         <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="target">{{
+                            <Label required for="target">{{
                                 t("target")
-                            }}</label>
+                            }}</Label>
                             <Field
                                 v-slot="{ values, errorMessage }"
                                 v-model="car.target"
@@ -482,9 +458,7 @@ watch(locale, () => {
                             </Field>
                         </div>
                         <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="shasi">{{
-                                t("shasi")
-                            }}</label>
+                            <Label required for="shasi">{{ t("shasi") }}</Label>
                             <Field
                                 v-slot="{ values, errorMessage }"
                                 v-model="car.shasi_nr"
@@ -508,11 +482,9 @@ watch(locale, () => {
 
                     <div class="grid grid-cols-12 gap-4">
                         <div class="col-span-6">
-                            <label
-                                class="block font-bold mb-3"
-                                for="registration"
-                                >{{ t("registration") }}</label
-                            >
+                            <Label for="registration">{{
+                                t("registration")
+                            }}</Label>
                             <Field
                                 v-slot="{ values }"
                                 v-model="car.registration"
@@ -533,17 +505,14 @@ watch(locale, () => {
                             </Field>
                         </div>
                         <div class="col-span-6">
-                            <label
-                                class="block font-bold mb-3"
+                            <Label
                                 for="technical_control"
                                 icon="pi pi-arrow-left"
-                                >{{ t("technical-control") }} (<span
-                                    v-if="car.owner"
-                                >
+                                >{{ t("owner") }} (<span v-if="car.owner">
                                     {{ t("yearly") }}
                                 </span>
                                 <span v-else> {{ t("6-month") }} </span>)
-                            </label>
+                            </Label>
                             <Field
                                 v-slot="{ values }"
                                 v-model="car.technical_control"
@@ -567,9 +536,7 @@ watch(locale, () => {
 
                     <div class="grid grid-cols-12 gap-4">
                         <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="owner">{{
-                                t("owner")
-                            }}</label>
+                            <Label for="owner">{{ t("owner") }}</Label>
                             <Field
                                 v-slot="{ values }"
                                 v-model="car.owner"
@@ -596,9 +563,7 @@ watch(locale, () => {
                     </div>
 
                     <div>
-                        <label class="block font-bold mb-3" for="comment">{{
-                            t("comment")
-                        }}</label>
+                        <Label required for="comment">{{ t("comment") }}</Label>
                         <Field
                             v-slot="{ values }"
                             v-model="car.comment"
@@ -671,9 +636,7 @@ watch(locale, () => {
                 <div class="flex flex-col gap-6">
                     <div class="grid grid-cols-12 gap-4">
                         <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="model">{{
-                                t("model")
-                            }}</label>
+                            <Label required for="model">{{ t("model") }}</Label>
                             <Field
                                 v-slot="{ values, errorMessage }"
                                 v-model="car.model"
@@ -695,9 +658,7 @@ watch(locale, () => {
                         </div>
 
                         <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="marsh">{{
-                                t("marsh")
-                            }}</label>
+                            <Label required for="marsh">{{ t("marsh") }}</Label>
                             <Field
                                 v-slot="{ values, errorMessage }"
                                 v-model="car.marsh"
@@ -723,9 +684,7 @@ watch(locale, () => {
 
                     <div class="grid grid-cols-12 gap-4">
                         <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="color">{{
-                                t("color")
-                            }}</label>
+                            <Label required for="color">{{ t("color") }}</Label>
                             <Field
                                 v-slot="{ values, errorMessage }"
                                 v-model="car.color"
@@ -746,11 +705,9 @@ watch(locale, () => {
                             </Field>
                         </div>
                         <div class="col-span-6">
-                            <label
-                                class="block font-bold mb-3"
-                                for="production_year"
-                                >{{ t("production") }}</label
-                            >
+                            <Label required for="production_year">{{
+                                t("production")
+                            }}</Label>
                             <Field
                                 v-slot="{ values, errorMessage }"
                                 v-model="car.production_year"
@@ -774,9 +731,9 @@ watch(locale, () => {
 
                     <div class="grid grid-cols-12 gap-4">
                         <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="target">{{
+                            <Label required for="target">{{
                                 t("target")
-                            }}</label>
+                            }}</Label>
                             <Field
                                 v-slot="{ values, errorMessage }"
                                 v-model="car.target"
@@ -797,9 +754,7 @@ watch(locale, () => {
                             </Field>
                         </div>
                         <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="shasi">{{
-                                t("shasi")
-                            }}</label>
+                            <Label required for="shasi">{{ t("shasi") }}</Label>
                             <Field
                                 v-slot="{ values, errorMessage }"
                                 v-model="car.shasi_nr"
@@ -823,11 +778,9 @@ watch(locale, () => {
 
                     <div class="grid grid-cols-12 gap-4">
                         <div class="col-span-6">
-                            <label
-                                class="block font-bold mb-3"
-                                for="registration"
-                                >{{ t("registration") }}</label
-                            >
+                            <Label for="registration">{{
+                                t("registration")
+                            }}</Label>
                             <Field
                                 v-slot="{ values }"
                                 v-model="car.registration"
@@ -848,15 +801,13 @@ watch(locale, () => {
                             </Field>
                         </div>
                         <div class="col-span-6">
-                            <label
-                                class="block font-bold mb-3"
-                                for="technical_control"
+                            <Label for="technical_control"
                                 >{{ t("technical-control") }} (<span
                                     v-if="car.owner"
                                 >
                                     {{ t("yearly") }}
                                 </span>
-                                <span v-else> {{ t("6-month") }} </span>)</label
+                                <span v-else> {{ t("6-month") }} </span>)</Label
                             >
                             <Field
                                 v-slot="{ values }"
@@ -881,9 +832,7 @@ watch(locale, () => {
 
                     <div class="grid grid-cols-12 gap-4">
                         <div class="col-span-6">
-                            <label class="block font-bold mb-3" for="owner">{{
-                                t("owner")
-                            }}</label>
+                            <Label for="owner">{{ t("owner") }}</Label>
                             <Field
                                 v-slot="{ values }"
                                 v-model="car.owner"
@@ -910,9 +859,7 @@ watch(locale, () => {
                     </div>
 
                     <div>
-                        <label class="block font-bold mb-3" for="comment">{{
-                            t("comment")
-                        }}</label>
+                        <Label required for="comment">{{ t("comment") }}</Label>
                         <Field
                             v-slot="{ values }"
                             v-model="car.comment"

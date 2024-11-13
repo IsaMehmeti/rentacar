@@ -74,6 +74,7 @@ function searchCountry(event) {
             });
         }
     }, 250);
+    console.log(autoFilteredValue.value);
 }
 </script>
 
@@ -325,11 +326,6 @@ function searchCountry(event) {
                 />
 
                 <div class="font-semibold text-xl">SelectButton</div>
-                <SelectButton
-                    v-model="selectButtonValue"
-                    :options="selectButtonValues"
-                    optionLabel="name"
-                />
             </div>
         </div>
     </Fluid>

@@ -13,21 +13,6 @@ use Twilio\Exceptions\TwilioException;
 
 class CarController extends Controller
 {
-
-
-    /**
-     * @throws TwilioException
-     * @throws ConfigurationException
-     */
-    public function notify()
-    {
-        $twilio = new TwilioService();
-        $message = $twilio
-            ->sendMessage(env('TWILIO_PHONE_TO'), 'Message from Project Rent a car Dushi');
-        dd("message", $message);
-
-    }
-
     /**
      * Display a listing of the resource.
      *

@@ -38,11 +38,11 @@ const model = computed(() => [
                         icon: "pi pi-fw pi-users",
                         to: "/clients",
                     },
-                    {
-                        label: `${t("add")} ${t("client")}`,
-                        icon: "pi pi-fw pi-user-plus",
-                        to: "/clients/create",
-                    },
+                    // {
+                    //     label: `${t("add")} ${t("client")}`,
+                    //     icon: "pi pi-fw pi-user-plus",
+                    //     to: "/clients/create",
+                    // },
                 ],
             },
         ],
@@ -58,11 +58,6 @@ const model = computed(() => [
                         label: t("car", 2),
                         icon: "pi pi-fw pi-car",
                         to: "/cars",
-                    },
-                    {
-                        label: `${t("add")} ${t("car")}`,
-                        icon: "pi pi-fw pi-plus",
-                        to: "/cars/create",
                     },
                 ],
             },

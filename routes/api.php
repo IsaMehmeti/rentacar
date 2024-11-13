@@ -28,6 +28,10 @@ Route::apiResource('registers', \App\Http\Controllers\RegisterController::class)
 
 Route::get('/clients/{id}/registers',
     [\App\Http\Controllers\ClientController::class, 'clientRegisters'])->name('client.registers');
+Route::get('/clients-search', [\App\Http\Controllers\ClientController::class, 'searchByName']);
+Route::post('registers-print/{id}', [\App\Http\Controllers\RegisterController::class, 'print']);
+
+
 //    Route::get('/registers/download/{id}', 'RegisterController@download')->name('registers.download');
 
 //});
