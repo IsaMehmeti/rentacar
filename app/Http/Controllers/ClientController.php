@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ClientController extends Controller
 {
@@ -12,24 +14,42 @@ class ClientController extends Controller
      */
     public function index()
     {
-        $clients = Client::all();
-        return view('client.index', compact('clients'));
+        return response()->json(Client::withCount('registers')->get());
     }
 
     public function clientRegisters($id)
     {
         $client = Client::findOrFail($id);
-        $registers = $client->registers;
-        return view('client.registers', compact('registers', 'client'));
+        return response()->json([
+            "status" => 'success',
+            "data" => [
+                "client" => $client,
+                "registers" => $client->registers
+            ],
+            "message" => null
+        ]);
+
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     */
-    public function create()
+    public function searchByName(Request $request)
     {
-        return view('client.create');
+        $name = $request->query('name');
+        if (!$name) {
+            return Client::latest()
+                ->whereNotNull('phone')
+                ->whereNotNull('id_card')
+                ->whereNotNull('drivers_license_id')
+                ->take(5)->get();
+        }
+
+        $clients = Client::where('full_name', 'like', '%'.$name.'%')
+            ->whereNotNull('phone')
+            ->whereNotNull('id_card')
+            ->whereNotNull('drivers_license_id')
+            ->take(5)->get();
+
+        return response()->json($clients);
+
     }
 
     /**
@@ -39,30 +59,31 @@ class ClientController extends Controller
      */
     public function store(Request $request)
     {
-        Client::create($request->all());
-        return redirect()->back()->with('status', 'U krijua me sukses');
+        $validated = $request->validate
+        (
+            [
+                'full_name' => 'required',
+                'address' => 'sometimes',
+                'phone' => 'sometimes',
+                'id_card' => 'required|unique:clients',
+                'birth' => 'sometimes',
+                'color' => 'sometimes',
+                'birthplace' => 'sometimes',
+                'drivers_license_id' => 'required|unique:clients',
+            ],
+            [
+                'id_card.unique' => 'Numri i letërnjoftimit ekziston.',
+                'drivers_license_id.unique' => 'Patentë shoferi ekziston.',
+            ]
+        );
+
+        return response()->json([
+            "status" => 'success',
+            "data" => Client::create($validated),
+            "message" => 'U krijua me sukses'
+        ]);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Client  $client
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Client $client)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Client  $client
-     */
-    public function edit(Client $client)
-    {
-        return view('client.edit', compact('client'));
-    }
 
     /**
      * Update the specified resource in storage.
@@ -72,19 +93,46 @@ class ClientController extends Controller
      */
     public function update(Request $request, Client $client)
     {
-        $client->update($request->all());
-        return redirect()->back()->with('status', 'U ndryshua me sukses');
+        $validated = $request->validate([
+            'full_name' => 'required',
+            'address' => 'sometimes',
+            'phone' => 'sometimes',
+            'drivers_license_id' => [
+                'required',
+            ],
+            'id_card' => [
+                'required',
+            ],
+            'birth' => 'sometimes',
+            'color' => 'sometimes',
+            'birthplace' => 'sometimes',
+
+        ],
+            [
+                'id_card.unique' => 'Numri i letërnjoftimit ekziston.',
+                'drivers_license_id.unique' => 'Patentë shoferi ekziston.',
+            ]
+        );
+
+        return response()->json([
+            "status" => 'success',
+            "data" => $client->update($validated),
+            "message" => 'U ndryshua me sukses'
+        ]);
     }
 
     /**
      * Remove the specified resource from storage.
      *
      * @param  \App\Models\Client  $client
-     * @return \Illuminate\Http\Response
      */
     public function destroy(Client $client)
     {
         $client->delete();
-        return redirect()->back()->with('danger', 'U fshi me sukses');
+        return response()->json([
+            "status" => 'success',
+            "data" => null,
+            "message" => 'U fshi me sukses'
+        ]);
     }
 }

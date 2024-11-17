@@ -13,6 +13,9 @@ class CreateFailedJobsTable extends Migration
      */
     public function up()
     {
+        if(Schema::hasTable('failed_jobs')) {
+            return;
+        }
         Schema::create('failed_jobs', function (Blueprint $table) {
             $table->id();
             $table->string('uuid')->unique();
@@ -22,6 +25,7 @@ class CreateFailedJobsTable extends Migration
             $table->longText('exception');
             $table->timestamp('failed_at')->useCurrent();
         });
+
     }
 
     /**
