@@ -10,7 +10,8 @@
     "car": "Veturë | Veturat",
     "the-car": "Vetura",
     "the-client": "Klienti",
-    "the-register": "Regjistrin",
+    "the-register": "Kontratën",
+    "update-register": "Ndrysho Kontratën",
     "clients": "Klientët",
     "add-client": "Shto Klient",
     "registers": "Kontratat",
@@ -86,5 +87,17 @@
     "fuel_status": "Statusi i karburantit",
     "total_price": "Çmimi total",
     "set-dates": "Zgjedh Datat",
-    "select-car": "Zgjedh veturën"
+    "select-car": "Zgjedh veturën",
+    "revenue": "Të ardhurat",
+    "registers-count": "Numri i kontratave",
+    "this-year": "Këtë Vit",
+    "this-month": "Këtë Muaj",
+    "today": "Sot",
+    "total": "Totali",
+    "show": "Shfaq",
+    "hide": "Fshehe",
+    "recent-registers": "Kontratat e fundit",
+    "not-found": "Nuk u gjet",
+    "not-available": "Faqja që kërkoni nuk është në dispozicion.",
+    "go-to": "Shko tek"
 }

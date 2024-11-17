@@ -11,6 +11,7 @@ import { ErrorMessage, Field, Form } from "vee-validate";
 import { ClientService } from "@/service/api/ClientService.js";
 import createClientSchema from "@/schemas/clientSchema.js";
 import Label from "@/components/Label.vue";
+import CreateRegister from "@/components/CreateRegister.vue";
 
 const toast = useToast();
 const queryClient = useQueryClient();
@@ -24,6 +25,7 @@ const dt = ref();
 const clientCreateDialog = ref(false);
 const clientUpdateDialog = ref(false);
 const deleteClientDialog = ref(false);
+const registerCreateDialog = ref(false);
 
 const client = ref({});
 const filters = ref({
@@ -157,6 +159,11 @@ function hideCreateClientDialog() {
     client.value = {};
 }
 
+const handleCreateRegister = (selectedClient) => {
+    client.value = selectedClient;
+    registerCreateDialog.value = true;
+};
+
 const schema = ref(createClientSchema(t)); // Initialize schema with the current locale
 
 // Watching for changes in the locale to recreate the schema when translation occurs
@@ -224,11 +231,11 @@ watch(locale, () => {
                 >
                     <template #body="slotProps">
                         <Chip
-                            v-tooltip="t('open-registers')"
                             v-if="slotProps.data.registers_count"
-                            class="text-xl cursor-pointer"
+                            class="text-xl"
                             :label="slotProps.data.registers_count"
                         ></Chip>
+                        <Chip v-else class="text-xl" label="0"></Chip>
                     </template>
                 </Column>
                 <Column
@@ -271,7 +278,7 @@ watch(locale, () => {
                             icon="pi pi-plus"
                             outlined
                             rounded
-                            @click="addRegister(slotProps.data)"
+                            @click="handleCreateRegister(slotProps.data)"
                         />
                         <Button
                             class="mr-2"
@@ -768,5 +775,14 @@ watch(locale, () => {
             </template>
         </Dialog>
         <!--   Delete client dialog end     -->
+
+        <!--   Create register dialog start     -->
+        <CreateRegister
+            v-model:visible="registerCreateDialog"
+            :client="client"
+            @update:visible="registerCreateDialog = $event"
+            @save="client.value = {}"
+        />
+        <!--   Create register dialog end     -->
     </div>
 </template>

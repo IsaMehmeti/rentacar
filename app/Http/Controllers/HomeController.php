@@ -15,32 +15,37 @@ class HomeController extends Controller
      */
     public function index()
     {
-        $registers = Register::all();
+        $totals = Register::selectRaw('
+    SUM(total_price) as total,
+    SUM(CASE WHEN created_at >= ? THEN total_price ELSE 0 END) as yearly,
+    SUM(CASE WHEN created_at >= ? THEN total_price ELSE 0 END) as monthly,
+    SUM(CASE WHEN created_at >= ? THEN total_price ELSE 0 END) as today
+', [Carbon::now()->startOfYear(), Carbon::now()->startOfMonth(), Carbon::today()])
+            ->first();
 
-        $total = 0;
-        foreach($registers as $register){
-            $total+= $register->total_price;
-        }
-        //get yearly total
-        $yearly = 0;
-        foreach($registers->where('created_at', '>=', Carbon::now()->startOfYear()) as $register){
-            $yearly+= $register->total_price;
-        }
+        $counts = Register::selectRaw('
+    COUNT(*) as total_count,
+    COUNT(CASE WHEN created_at >= ? THEN 1 END) as yearly_count,
+    COUNT(CASE WHEN created_at >= ? THEN 1 END) as monthly_count,
+    COUNT(CASE WHEN created_at >= ? THEN 1 END) as today_count
+', [Carbon::now()->startOfYear(), Carbon::now()->startOfMonth(), Carbon::today()])
+            ->first();
 
-        //get today's total
-        $today = 0;
-        foreach($registers->where('created_at', '>=', Carbon::today()) as $register){
-            $today+= $register->total_price;
-        }
         return response()->json([
-                "status" => 'success',
-                "data" => [
-                    "today" => $today,
-                    "total" => $total,
-                    "yearly" => $yearly,
-                    "registers" => $registers
-                ],
-                "message" => null
+            "status" => 'success',
+            "data" => [
+                "total" => $totals->total,
+                "today" => $totals->today,
+                "monthly" => $totals->monthly,
+                "yearly" => $totals->yearly,
+                "counts" => [
+                    "total" => $counts->total_count,
+                    "yearly" => $counts->yearly_count,
+                    "monthly" => $counts->monthly_count,
+                    "today" => $counts->today_count,
+                ]
+            ],
+            "message" => null
         ]);
     }
 }

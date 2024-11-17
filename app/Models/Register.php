@@ -6,6 +6,7 @@ use App\Services\CarService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use PhpParser\Builder;
 
 class Register extends Model
 {

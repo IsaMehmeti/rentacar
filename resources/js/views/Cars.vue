@@ -523,7 +523,7 @@ watch(locale, () => {
                                     v-model="car.technical_control"
                                     :showButtonBar="true"
                                     :showIcon="true"
-                                    ateFormat="dd-mm-yy"
+                                    dateFormat="dd-mm-yy"
                                     placeholder="dd-mm-yyyy"
                                 />
                                 <ErrorMessage
@@ -819,7 +819,7 @@ watch(locale, () => {
                                     v-model="car.technical_control"
                                     :showButtonBar="true"
                                     :showIcon="true"
-                                    ateFormat="dd-mm-yy"
+                                    dateFormat="dd-mm-yy"
                                     placeholder="dd-mm-yyyy"
                                 />
                                 <ErrorMessage
@@ -859,7 +859,7 @@ watch(locale, () => {
                     </div>
 
                     <div>
-                        <Label required for="comment">{{ t("comment") }}</Label>
+                        <Label for="comment">{{ t("comment") }}</Label>
                         <Field
                             v-slot="{ values }"
                             v-model="car.comment"
@@ -907,7 +907,7 @@ watch(locale, () => {
                 {{ error[0] }}
             </Message>
         </Dialog>
-        <!--   Create car dialog end     -->
+        <!--   Update car dialog end     -->
 
         <!--   Delete car dialog     -->
         <Dialog

@@ -16,34 +16,12 @@ const model = computed(() => [
             {
                 label: t("register", 2),
                 icon: "pi pi-fw pi-file-o",
-                items: [
-                    {
-                        label: t("register", 2),
-                        icon: "pi pi-fw pi-print",
-                        to: "/contracts",
-                    },
-                    {
-                        label: `${t("add")} ${t("register")}`,
-                        icon: "pi pi-fw pi-plus",
-                        to: "/contracts/create",
-                    },
-                ],
+                to: "/contracts",
             },
             {
                 label: t("client", 2),
                 icon: "pi pi-fw pi-users",
-                items: [
-                    {
-                        label: t("client", 2),
-                        icon: "pi pi-fw pi-users",
-                        to: "/clients",
-                    },
-                    // {
-                    //     label: `${t("add")} ${t("client")}`,
-                    //     icon: "pi pi-fw pi-user-plus",
-                    //     to: "/clients/create",
-                    // },
-                ],
+                to: "/clients",
             },
         ],
     },
@@ -53,17 +31,29 @@ const model = computed(() => [
             {
                 label: t("car", 2),
                 icon: "pi pi-fw pi-car",
-                items: [
-                    {
-                        label: t("car", 2),
-                        icon: "pi pi-fw pi-car",
-                        to: "/cars",
-                    },
-                ],
+                to: "/cars",
             },
         ],
     },
 ]);
+
+// make a folder of menu
+// {
+//     label: t("register", 2),
+//     icon: "pi pi-fw pi-file-o",
+//     items: [
+//         {
+//             label: t("register", 2),
+//             icon: "pi pi-fw pi-print",
+//             to: "/contracts",
+//         },
+//         {
+//             label: `${t("add")} ${t("register")}`,
+//             icon: "pi pi-fw pi-plus",
+//             to: "/contracts/create",
+//         },
+//     ],
+// },
 </script>
 
 <template>

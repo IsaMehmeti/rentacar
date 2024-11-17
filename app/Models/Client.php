@@ -26,8 +26,19 @@ class Client extends Model
     public function getBirthAttribute($value)
     {
         if ($value) {
-            return Carbon::parse($value)->format(CarService::$dateFormat);
+            return Carbon::parse($value)
+                ->timezone('Europe/Belgrade')
+                ->format(CarService::$dateFormat);
         }
         return null;
+    }
+
+    public function setBirthAttribute($value)
+    {
+        if ($value) {
+            $this->attributes['birth'] = Carbon::parse($value)
+                ->timezone('Europe/Belgrade')
+                ->format('y-m-d');
+        }
     }
 }

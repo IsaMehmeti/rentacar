@@ -46,13 +46,6 @@ class CarController extends Controller
                 'shasi_nr.unique' => 'Numri i shasisë ekziston.', // Custom message for unique validation on 'shasi_nr'
                 // Add additional custom messages for other fields as needed
             ]);
-        if (isset($validated['technical_control'])) {
-            $validated['technical_control'] = Carbon::parse($validated['technical_control'])->format('Y-m-d');
-        }
-
-        if (isset($validated['registration'])) {
-            $validated['registration'] = Carbon::parse($validated['registration'])->format('Y-m-d');
-        }
 
         return response()->json([
             "status" => 'success',
@@ -89,13 +82,7 @@ class CarController extends Controller
                 // Add additional custom messages for other fields as needed
             ]
         );
-        if (isset($validated['technical_control'])) {
-            $validated['technical_control'] = Carbon::parse($validated['technical_control'])->format('Y-m-d');
-        }
-
-        if (isset($validated['registration'])) {
-            $validated['registration'] = Carbon::parse($validated['registration'])->format('Y-m-d');
-        }
+        
 
         $car->update($validated);
         return response()->json([

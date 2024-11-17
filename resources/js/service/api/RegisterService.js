@@ -1,8 +1,10 @@
 import api from "@/axios.js";
 
 export const RegisterService = {
-    list: async () => {
-        return await api().get("registers");
+    list: async (data) => {
+        return await api().get("registers", {
+            params: data,
+        });
     },
     store: async (data) => {
         return await api().post("registers", data, {

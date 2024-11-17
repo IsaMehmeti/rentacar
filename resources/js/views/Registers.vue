@@ -1,5 +1,7 @@
 <script setup>
 import { FilterMatchMode } from "@primevue/core/api";
+import Label from "@/components/Label.vue";
+import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
 import { useToast } from "primevue/usetoast";
 import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
@@ -7,6 +9,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
 import { useI18n } from "vue-i18n";
 import { RegisterService } from "@/service/api/RegisterService.js";
 import CreateRegister from "@/components/CreateRegister.vue";
+import { Form, Field, ErrorMessage } from "vee-validate";
 
 const toast = useToast();
 const queryClient = useQueryClient();
@@ -18,7 +21,7 @@ const pageTitle = computed(() => t(route.meta.title));
 
 const dt = ref();
 const registerCreateDialog = ref(false);
-const carUpdateDialog = ref(false);
+const registerUpdateDialog = ref(false);
 const submitted = ref(false);
 const deleteRegisterDialog = ref(false);
 
@@ -27,6 +30,7 @@ const car = ref({});
 const client = ref({});
 
 const register = ref({});
+const isPrinting = ref(false);
 const carPopover = ref(null);
 const clientPopover = ref(null);
 const filters = ref({
@@ -81,18 +85,45 @@ const {
     onSuccess: (data) => {
         const blob = new Blob([data.data], { type: "application/pdf" });
         const fileURL = window.URL.createObjectURL(blob);
+        isPrinting.value = false;
 
         const iframe = document.createElement("iframe");
         document.body.appendChild(iframe);
 
         iframe.style.display = "none";
         iframe.src = fileURL;
-        iframe.onload = function () {
-            setTimeout(function () {
-                iframe.focus();
-                iframe.contentWindow.print();
-            }, 1);
+        iframe.onload = () => {
+            iframe.focus();
+            iframe.contentWindow.print();
         };
+    },
+});
+
+// update register
+const {
+    mutate: updateRegister,
+    isError: registerUpdateIsError,
+    error: registerUpdateError,
+} = useMutation({
+    mutationKey: ["register-update", register],
+    cacheTime: 0,
+    staleTime: 0,
+    mutationFn: async () => {
+        return await RegisterService.update(register.value, register.value.id);
+    },
+    onError: (e) => {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: $("went-wrong"),
+            life: 3000,
+        });
+        console.log(e);
+    },
+    onSuccess: (data) => {
+        register.value = {};
+        registerUpdateDialog.value = false;
+        refetch();
     },
 });
 
@@ -119,6 +150,7 @@ function handleDeleteRegister() {
 // handle print register
 const handlePrintRegister = (selectedRegister) => {
     register.value = selectedRegister;
+    isPrinting.value = register.value.id;
     printRegister();
 };
 
@@ -204,7 +236,7 @@ function createNewRegister() {
                 <Column
                     :header="t('status')"
                     field="status"
-                    style="min-width: 3rem; text-align: center"
+                    style="min-width: 2rem; text-align: center"
                     sortable
                 >
                     <template #body="slotProps">
@@ -243,7 +275,7 @@ function createNewRegister() {
                     :header="t('the-client')"
                     field="client.full_name"
                     sortable
-                    style="min-width: 10rem"
+                    style="min-width: 8rem"
                 >
                     <template #body="slotProps">
                         <Button
@@ -312,13 +344,13 @@ function createNewRegister() {
                     :header="t('the-car')"
                     field="car.model"
                     sortable
-                    style="min-width: 16rem"
+                    style="min-width: 4rem"
                 >
                     <template #body="slotProps">
                         <Button
                             v-if="slotProps.data.car"
                             link
-                            :label="`${slotProps.data.car.model} - ${slotProps.data.car.color} ${slotProps.data.car.marsh}`"
+                            :label="`${slotProps.data.car.model} - ${slotProps.data.car.color}`"
                             variant="link"
                             @click="
                                 (event) =>
@@ -367,6 +399,22 @@ function createNewRegister() {
                     </template>
                 </Column>
 
+                <Column
+                    :header="t('comment')"
+                    field="comment"
+                    sortable
+                    style="min-width: 8rem; max-width: 12rem"
+                >
+                    <template #body="slotProps">
+                        <p
+                            v-tooltip="slotProps.data.comment"
+                            class="truncate max-w-xs"
+                        >
+                            {{ slotProps.data.comment }}
+                        </p>
+                    </template>
+                </Column>
+
                 <Column :exportable="false" style="min-width: 12rem">
                     <template #body="slotProps">
                         <Button
@@ -374,6 +422,7 @@ function createNewRegister() {
                             icon="pi pi-print"
                             outlined
                             rounded
+                            :loading="isPrinting === slotProps.data.id"
                             @click="handlePrintRegister(slotProps.data)"
                         />
                         <Button
@@ -381,7 +430,10 @@ function createNewRegister() {
                             icon="pi pi-pencil"
                             outlined
                             rounded
-                            @click="editCar(slotProps.data)"
+                            @click="
+                                (register = { ...slotProps.data }),
+                                    (registerUpdateDialog = true)
+                            "
                         />
 
                         <Button
@@ -389,15 +441,10 @@ function createNewRegister() {
                             outlined
                             rounded
                             @click="confirmDeleteCar(slotProps.data)"
+                            severity="danger"
                         />
                     </template>
                 </Column>
-                <Column
-                    :header="t('color')"
-                    field="color"
-                    hidden
-                    style="min-width: 16rem"
-                ></Column>
                 <template #empty> {{ t("no-data-found") }} </template>
             </DataTable>
         </div>
@@ -406,11 +453,111 @@ function createNewRegister() {
         <!--   Create register dialog start     -->
         <CreateRegister
             v-model:visible="registerCreateDialog"
-            :client="false"
+            :client="{}"
             @update:visible="registerCreateDialog = $event"
             @save="refetch"
         />
         <!--   Create register dialog end     -->
+
+        <!--   Update register dialog start     -->
+        <Dialog
+            v-model:visible="registerUpdateDialog"
+            :dismissableMask="true"
+            :modal="true"
+            :style="{ width: '500px' }"
+        >
+            <template #header>
+                <div class="flex justify-between items-center w-full">
+                    <span class="text-xl font-bold">{{
+                        t("update-register")
+                    }}</span>
+                    <div class="flex items-center gap-2">
+                        <LanguageSwitcher />
+                    </div>
+                </div>
+            </template>
+            <Form ref="registerUpdateForm" @submit="updateRegister">
+                <div class="flex flex-col">
+                    <Label required>
+                        <span>
+                            {{ t("the-client") }}
+                        </span>
+                    </Label>
+
+                    <Select
+                        v-model="register.client"
+                        :options="[register.client]"
+                        class="w-full"
+                        :optionLabel="(client) => `${client.full_name}`"
+                    />
+                </div>
+                <div class="flex flex-col mt-4">
+                    <Label required>
+                        <span>
+                            {{ t("the-car") }}
+                        </span>
+                    </Label>
+
+                    <Select
+                        v-model="register.car"
+                        :options="[register.car]"
+                        class="w-full"
+                        :optionLabel="
+                            (car) => `${car.model} ${car.color} - ${car.marsh}`
+                        "
+                    />
+                </div>
+                <div class="flex flex-col mt-6">
+                    <div>
+                        <Label for="comment">{{ t("comment") }}</Label>
+                        <Field
+                            v-slot="{ values }"
+                            v-model="register.comment"
+                            :validateOnChange="true"
+                            name="comment"
+                        >
+                            <Textarea
+                                id="comment"
+                                v-model="register.comment"
+                                class="w-full"
+                                cols="20"
+                                rows="3"
+                            />
+                            <ErrorMessage
+                                class="text-red-500 text-m mt-2"
+                                name="comment"
+                            />
+                        </Field>
+                    </div>
+                </div>
+                <div class="float-end mt-4">
+                    <Button
+                        :label="t('cancel')"
+                        icon="pi pi-times"
+                        text
+                        @click="(registerUpdateDialog = false), (register = {})"
+                    />
+                    <Button
+                        :label="t('save')"
+                        class="ml-3.5"
+                        icon="pi pi-check"
+                        type="submit"
+                    />
+                </div>
+            </Form>
+            <!-- Add a clear div -->
+            <div style="clear: both"></div>
+            <Message
+                v-for="error in registerUpdateError.response.data.errors"
+                v-if="registerUpdateError?.status === 422"
+                class="mt-2 mb-2"
+                icon="pi pi-times-circle"
+                severity="error"
+            >
+                {{ error[0] }}
+            </Message>
+        </Dialog>
+        <!--   Update register dialog end     -->
 
         <!--   Delete register dialog     -->
         <Dialog

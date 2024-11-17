@@ -59,25 +59,23 @@ class ClientController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'full_name' => 'required',
-            'address' => 'sometimes',
-            'phone' => 'sometimes',
-            'id_card' => 'required|unique:clients',
-            'birth' => 'sometimes',
-            'color' => 'sometimes',
-            'birthplace' => 'sometimes',
-            'drivers_license_id' => 'required|unique:clients',
-        ],
+        $validated = $request->validate
+        (
+            [
+                'full_name' => 'required',
+                'address' => 'sometimes',
+                'phone' => 'sometimes',
+                'id_card' => 'required|unique:clients',
+                'birth' => 'sometimes',
+                'color' => 'sometimes',
+                'birthplace' => 'sometimes',
+                'drivers_license_id' => 'required|unique:clients',
+            ],
             [
                 'id_card.unique' => 'Numri i letërnjoftimit ekziston.',
                 'drivers_license_id.unique' => 'Patentë shoferi ekziston.',
-            ]);
-
-        if (isset($validated['birth'])) {
-            $validated['birth'] = Carbon::parse($validated['birth'])->format('y-m-d');
-        }
-
+            ]
+        );
 
         return response()->json([
             "status" => 'success',
@@ -115,11 +113,6 @@ class ClientController extends Controller
                 'drivers_license_id.unique' => 'Patentë shoferi ekziston.',
             ]
         );
-
-        if (isset($validated['birth'])) {
-            $validated['birth'] = Carbon::parse($validated['birth'])->format('y-m-d');
-        }
-
 
         return response()->json([
             "status" => 'success',

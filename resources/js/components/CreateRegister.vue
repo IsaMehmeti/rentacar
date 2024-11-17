@@ -16,17 +16,18 @@ const { t, locale } = useI18n();
 
 const props = defineProps({
     visible: Boolean,
+    client: Object,
 });
 const emit = defineEmits(["update:visible", "save"]);
 const clientCreateForm = ref(null);
 const filteredClients = ref([]);
-// const selectedClient = ref(props.client || {});
-// const client = ref({});
+
 const register = ref({
     client: {},
     days: 0,
     count_today: true,
 });
+
 const internalVisible = ref(props.visible);
 //search client
 const {
@@ -110,6 +111,14 @@ watch(
 watch(internalVisible, (newVal) => {
     if (!newVal) emit("update:visible", false);
 });
+
+watch(
+    () => props.client,
+    (newClient) => {
+        register.value.client = newClient || {};
+    },
+    { immediate: true },
+);
 
 const handleClose = () => {
     register.value = {

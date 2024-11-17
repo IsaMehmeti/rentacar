@@ -50,7 +50,9 @@ class Car extends Model
     {
 
         if ($value) {
-            return Carbon::parse($value)->format(CarService::$dateFormat);
+            return Carbon::parse($value)
+                ->timezone('Europe/Belgrade')
+                ->format(CarService::$dateFormat);
         }
         return null;
     }
@@ -59,8 +61,30 @@ class Car extends Model
     public function getRegistrationAttribute($value)
     {
         if ($value) {
-            return Carbon::parse($value)->format(CarService::$dateFormat);
+            return Carbon::parse($value)
+                ->timezone('Europe/Belgrade')
+                ->format(CarService::$dateFormat);
         }
         return null;
+    }
+
+
+    public function setRegistrationAttribute($value)
+    {
+
+        if ($value) {
+            $this->attributes['registration'] = Carbon::parse($value)
+                ->timezone('Europe/Belgrade')
+                ->format('Y-m-d');
+        }
+    }
+
+    public function setTechnicalControlAttribute($value)
+    {
+        if ($value) {
+            $this->attributes['technical_control'] = Carbon::parse($value)
+                ->timezone('Europe/Belgrade')
+                ->format('Y-m-d');
+        }
     }
 }

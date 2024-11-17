@@ -26,8 +26,8 @@ const createCarSchema = (t) => {
             .string()
             .required(t("validation.required", { field: t("color") })),
         comment: yup.string().nullable(),
-        technical_control: yup.date().nullable(),
-        registration: yup.date().nullable(),
+        technical_control: yup.string().nullable(),
+        registration: yup.string().nullable(),
     });
 };
 

@@ -14,25 +14,24 @@ use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [\App\Http\Controllers\AuthController::class, 'login']);
-//Route::group(['middleware' => 'auth:api'], function () {
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/logout', [AuthController::class, 'logout']);
-Route::post('/refresh', [AuthController::class, 'refresh']);
-Route::post('/me', [AuthController::class, 'me']);
+Route::group(['middleware' => 'auth:api'], function () {
+    Route::get('/index', [\App\Http\Controllers\HomeController::class, 'index']);
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/refresh', [AuthController::class, 'refresh']);
+    Route::post('/me', [AuthController::class, 'me']);
 
-Route::get('/car/notify', [\App\Http\Controllers\CarController::class, 'notify']);
+    Route::get('/car/notify', [\App\Http\Controllers\CarController::class, 'notify']);
 
-Route::apiResource('clients', \App\Http\Controllers\ClientController::class);
-Route::apiResource('cars', \App\Http\Controllers\CarController::class);
-Route::apiResource('registers', \App\Http\Controllers\RegisterController::class);
+    Route::apiResource('clients', \App\Http\Controllers\ClientController::class);
+    Route::apiResource('cars', \App\Http\Controllers\CarController::class);
+    Route::apiResource('registers', \App\Http\Controllers\RegisterController::class);
 
-Route::get('/clients/{id}/registers',
-    [\App\Http\Controllers\ClientController::class, 'clientRegisters'])->name('client.registers');
-Route::get('/clients-search', [\App\Http\Controllers\ClientController::class, 'searchByName']);
-Route::post('registers-print/{id}', [\App\Http\Controllers\RegisterController::class, 'print']);
-
-
+    Route::get('/clients/{id}/registers',
+        [\App\Http\Controllers\ClientController::class, 'clientRegisters'])->name('client.registers');
+    Route::get('/clients-search', [\App\Http\Controllers\ClientController::class, 'searchByName']);
+    Route::post('registers-print/{id}', [\App\Http\Controllers\RegisterController::class, 'print']);
 //    Route::get('/registers/download/{id}', 'RegisterController@download')->name('registers.download');
 
-//});
+});
 

@@ -30,16 +30,20 @@ class RegisterController extends Controller
      * Display a listing of the resource.
      *
      */
-    public function index()
+    public function index(Request $request)
     {
+        $registers = Register::with([
+            'car' => function ($query) {
+                $query->withTrashed();
+            }, 'client' => function ($query) {
+                $query->withTrashed();
+            }
+        ])->latest();
+
         return response()->json(
-            Register::with([
-                'car' => function ($query) {
-                    $query->withTrashed();
-                }, 'client' => function ($query) {
-                    $query->withTrashed();
-                }
-            ])->get(),
+            $request->input('take')
+                ? $registers->take($request->input('take'))->get()
+                : $registers->get(),
         );
     }
 
@@ -148,7 +152,7 @@ class RegisterController extends Controller
         $validated['end_date'] = $end_date->format('Y-m-d');
 
         $client = Client::firstOrCreate(
-            ['id' => $request->client['id']],
+            ['id' => $request->client['id'] ?? null],
             $request->client
         );
         $register = Register::create([
@@ -169,11 +173,9 @@ class RegisterController extends Controller
      */
     public function update(Request $request, Register $register)
     {
-        $request->validate([
-            'car_id' => 'required|exists:cars,id',
-            'client_id' => 'required|exists:clients,id',
+        $register->update([
+            'comment' => $request->comment,
         ]);
-        $register->update($request->all());
         return response()->json([
             "status" => 'success',
             "data" => $register,
