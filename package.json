@@ -4,7 +4,7 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-        "heroku-postbuild": "npm install && npm run build"
+        "postinstall": "npm run build"
     },
     "dependencies": {
         "@primevue/themes": "^4.0.0",
@@ -46,7 +46,7 @@
         "vite": "^5.3.1"
     },
     "engines": {
-        "node": "18.x",
+        "node": "22.x",
         "npm": "9.x"
     }
 }
