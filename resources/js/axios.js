@@ -5,7 +5,7 @@ import { useAuthStore } from "@/stores/authStore.js";
  * Initialize Axios
  */
 const api = axios.create({
-    baseURL: `${import.meta.env.VITE_BACKEND_URL ?? "http://127.0.0.1:8000"}/api`, // Set your API base URL in .env
+    baseURL: `${import.meta.env.VITE_BACKEND_URL ?? "http://127.0.0.1:8000"}api`, // Set your API base URL in .env
     headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
