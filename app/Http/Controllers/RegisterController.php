@@ -137,7 +137,6 @@ class RegisterController extends Controller
             'price_per_day' => "sometimes",
             'total_price' => "sometimes",
             'comment' => "sometimes",
-            'fuel_status' => "sometimes",
             'driver' => "sometimes",
             'birthplace' => "sometimes",
             'drivers_license_id' => "sometimes",

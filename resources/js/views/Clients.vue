@@ -281,18 +281,20 @@ watch(locale, () => {
                             @click="handleCreateRegister(slotProps.data)"
                         />
                         <Button
+                            v-tooltip="t('edit')"
                             class="mr-2"
                             icon="pi pi-pencil"
                             outlined
                             rounded
-                            @click="editClient(slotProps.data)"
+                            @click="editCar(slotProps.data)"
                         />
                         <Button
+                            v-tooltip="t('delete')"
                             icon="pi pi-trash"
                             outlined
                             rounded
                             severity="danger"
-                            @click="confirmDeleteClient(slotProps.data)"
+                            @click="confirmDeleteCar(slotProps.data)"
                         />
                     </template>
                 </Column>

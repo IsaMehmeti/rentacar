@@ -10,6 +10,7 @@ import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
 import { ErrorMessage, Field, Form } from "vee-validate";
 import createCarSchema from "@/schemas/carSchema.js";
 import Label from "@/components/Label.vue";
+import CarView from "../components/CarView.vue";
 
 const toast = useToast();
 const queryClient = useQueryClient();
@@ -22,6 +23,7 @@ const pageTitle = computed(() => t(route.meta.title));
 const dt = ref();
 const carDialog = ref(false);
 const carUpdateDialog = ref(false);
+const carViewDialog = ref(false);
 const submitted = ref(false);
 const deleteCarDialog = ref(false);
 
@@ -32,11 +34,26 @@ const filters = ref({
 });
 const carCreateForm = ref(null);
 const carTransmissions = ref(["automatik", "manual"]);
+const carFuels = ref([
+    "diesel",
+    "benzine",
+    "elektrik",
+    "hybrid",
+    "gaz",
+    "other",
+]);
 
 const formattedCarTransmissions = computed(() =>
     carTransmissions.value.map((transmission) => ({
-        label: transmission, // This is what the user sees in the dropdown
-        value: transmission, // This is the actual value set in `car.marsh`
+        label: transmission,
+        value: transmission,
+    })),
+);
+
+const formattedCarFuels = computed(() =>
+    carFuels.value.map((fuel) => ({
+        label: fuel,
+        value: fuel,
     })),
 );
 
@@ -165,6 +182,11 @@ function editCar(selectedCar) {
     carUpdateDialog.value = true;
 }
 
+function handleViewCar(selectedCar) {
+    car.value = selectedCar;
+    carViewDialog.value = true;
+}
+
 function hideCreateCarDialog() {
     carDialog.value = false;
 }
@@ -231,6 +253,7 @@ watch(locale, () => {
                         {{ slotProps.data.model }}
                         {{ slotProps.data.color }} -
                         {{ slotProps.data.production_year }}
+                        ({{ slotProps.data.fuel }})
                     </template>
                 </Column>
                 <Column
@@ -291,6 +314,15 @@ watch(locale, () => {
                 <Column :exportable="false" style="min-width: 12rem">
                     <template #body="slotProps">
                         <Button
+                            v-tooltip="t('view-car')"
+                            class="mr-2"
+                            icon="pi pi-eye"
+                            outlined
+                            rounded
+                            @click="handleViewCar(slotProps.data)"
+                        />
+                        <Button
+                            v-tooltip="t('edit')"
                             class="mr-2"
                             icon="pi pi-pencil"
                             outlined
@@ -298,6 +330,7 @@ watch(locale, () => {
                             @click="editCar(slotProps.data)"
                         />
                         <Button
+                            v-tooltip="t('delete')"
                             icon="pi pi-trash"
                             outlined
                             rounded
@@ -339,7 +372,7 @@ watch(locale, () => {
             >
                 <div class="flex flex-col gap-6">
                     <div class="grid grid-cols-12 gap-4">
-                        <div class="col-span-6">
+                        <div class="col-span-4">
                             <Label required for="model">{{ t("model") }}</Label>
                             <Field
                                 v-slot="{ values, errorMessage }"
@@ -361,7 +394,7 @@ watch(locale, () => {
                             </Field>
                         </div>
 
-                        <div class="col-span-6">
+                        <div class="col-span-4">
                             <Label required for="marsh">{{ t("marsh") }}</Label>
                             <Field
                                 v-slot="{ values, errorMessage }"
@@ -381,6 +414,30 @@ watch(locale, () => {
                                 <ErrorMessage
                                     class="text-red-500 text-m mt-2"
                                     name="marsh"
+                                />
+                            </Field>
+                        </div>
+
+                        <div class="col-span-4">
+                            <Label required for="fuel">{{ t("fuel") }}</Label>
+                            <Field
+                                v-slot="{ values, errorMessage }"
+                                v-model="car.fuel"
+                                :validateOnChange="true"
+                                name="fuel"
+                            >
+                                <Select
+                                    v-model="car.fuel"
+                                    :invalid="!!errorMessage"
+                                    :options="formattedCarFuels"
+                                    :placeholder="t('select-one')"
+                                    class="w-full"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                />
+                                <ErrorMessage
+                                    class="text-red-500 text-m mt-2"
+                                    name="fuel"
                                 />
                             </Field>
                         </div>
@@ -563,7 +620,7 @@ watch(locale, () => {
                     </div>
 
                     <div>
-                        <Label required for="comment">{{ t("comment") }}</Label>
+                        <Label for="comment">{{ t("comment") }}</Label>
                         <Field
                             v-slot="{ values }"
                             v-model="car.comment"
@@ -635,7 +692,7 @@ watch(locale, () => {
             >
                 <div class="flex flex-col gap-6">
                     <div class="grid grid-cols-12 gap-4">
-                        <div class="col-span-6">
+                        <div class="col-span-4">
                             <Label required for="model">{{ t("model") }}</Label>
                             <Field
                                 v-slot="{ values, errorMessage }"
@@ -657,7 +714,7 @@ watch(locale, () => {
                             </Field>
                         </div>
 
-                        <div class="col-span-6">
+                        <div class="col-span-4">
                             <Label required for="marsh">{{ t("marsh") }}</Label>
                             <Field
                                 v-slot="{ values, errorMessage }"
@@ -677,6 +734,29 @@ watch(locale, () => {
                                 <ErrorMessage
                                     class="text-red-500 text-m mt-2"
                                     name="marsh"
+                                />
+                            </Field>
+                        </div>
+                        <div class="col-span-4">
+                            <Label required for="fuel">{{ t("fuel") }}</Label>
+                            <Field
+                                v-slot="{ values, errorMessage }"
+                                v-model="car.fuel"
+                                :validateOnChange="true"
+                                name="fuel"
+                            >
+                                <Select
+                                    v-model="car.fuel"
+                                    :invalid="!!errorMessage"
+                                    :options="formattedCarFuels"
+                                    :placeholder="t('select-one')"
+                                    class="w-full"
+                                    optionLabel="label"
+                                    optionValue="value"
+                                />
+                                <ErrorMessage
+                                    class="text-red-500 text-m mt-2"
+                                    name="fuel"
                                 />
                             </Field>
                         </div>
@@ -940,5 +1020,13 @@ watch(locale, () => {
             </template>
         </Dialog>
         <!--   Delete car dialog end     -->
+
+        <!--   Car view dialog start     -->
+        <CarView
+            v-model:visible="carViewDialog"
+            :car="car"
+            @update:visible="carViewDialog = $event"
+        />
+        <!--   Car view dialog end     -->
     </div>
 </template>

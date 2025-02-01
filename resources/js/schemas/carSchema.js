@@ -10,6 +10,9 @@ const createCarSchema = (t) => {
         model: yup
             .string()
             .required(t("validation.required", { field: t("model") })),
+        fuel: yup
+            .string()
+            .required(t("validation.required", { field: t("fuel") })),
         marsh: yup
             .string()
             .required(t("validation.required", { field: t("marsh") })),

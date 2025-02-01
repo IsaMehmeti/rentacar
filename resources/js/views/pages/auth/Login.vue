@@ -13,6 +13,7 @@ const password = ref("");
 const authStore = useAuthStore();
 const router = useRouter();
 const { t } = useI18n();
+const appName = import.meta.env.VITE_APP_NAME ?? "Rent a Car";
 
 const {
     mutate: onSave,
@@ -35,7 +36,6 @@ const {
             email: email.value,
             password: password.value,
         });
-        (email.value = ""), (password.value = "");
         return router.push("/");
     },
 });
@@ -613,7 +613,7 @@ l-3 22 -13 -23z"
                         <div
                             class="text-surface-900 dark:text-surface-0 text-3xl font-medium mb-4"
                         >
-                            Rent a Car Dushi
+                            {{ appName }}
                         </div>
                         <span class="text-muted-color font-medium">
                             {{ t("welcome") }}

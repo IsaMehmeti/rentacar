@@ -12,7 +12,7 @@ import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
 const authStore = useAuthStore();
 const router = useRouter();
 const { t } = useI18n({ useScope: "global" });
-
+const appName = import.meta.env.VITE_APP_NAME ?? "Rent a Car";
 const menuVisible = ref(false);
 
 const { onMenuToggle, toggleDarkMode, executeDarkModeToggle, isDarkTheme } =
@@ -567,7 +567,7 @@ l-3 22 -13 -23z"
                     </g>
                 </svg>
 
-                <span>Rent a Car Dushi</span>
+                <span>{{appName}}</span>
             </router-link>
         </div>
 

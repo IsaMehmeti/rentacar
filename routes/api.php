@@ -16,12 +16,15 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [\App\Http\Controllers\AuthController::class, 'login']);
 Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/index', [\App\Http\Controllers\HomeController::class, 'index']);
+    Route::get('/by-car/{id}', [\App\Http\Controllers\HomeController::class, 'byCar']);
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::post('/me', [AuthController::class, 'me']);
 
     Route::get('/car/notify', [\App\Http\Controllers\CarController::class, 'notify']);
+
+    Route::get('/cars/{car}/registers', [\App\Http\Controllers\CarController::class, 'registers']);
 
     Route::apiResource('clients', \App\Http\Controllers\ClientController::class);
     Route::apiResource('cars', \App\Http\Controllers\CarController::class);

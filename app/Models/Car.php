@@ -13,15 +13,19 @@ class Car extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'model', 'marsh', 'production_year', 'target', 'shasi_nr', 'owner', 'color', 'comment',
-
+        'model', 'marsh', 'production_year', 'target', 'shasi_nr', 'owner', 'color', 'comment', "fuel",
         //
-        'technical_control', 'registration'
+        'technical_control', 'registration', 
     ];
 
     protected $appends = [
         'registration_status', 'technical_control_status'
     ];
+
+    public function registers()
+    {
+        return $this->hasMany(Register::class);
+    }
 
     public function images()
     {

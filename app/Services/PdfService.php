@@ -121,7 +121,7 @@ class PdfService
             'target' => $register->car->target ?? '',
             'production_year' => $register->car->production_year ?? '',
 
-            'fuel_status' => $register->fuel_status ?? '',
+            'fuel_status' => $register->car->fuel ?? '',
 
             'start_date' => $start_date->format('d-m-Y H:i') ?? '',
             'end_date' => $end_date->format('d-m-Y H:i') ?? '',
@@ -129,6 +129,10 @@ class PdfService
             'days' => $register->days ?? '',
             'price_per_day' => $register->price_per_day ?? '',
             'total_price' => $register->total_price ?? '',
+
+            'company_name' => env('COMPANY_NAME', 'Company Name'),
+            'company_address' => env('COMPANY_ADDRESS', 'Company Address'),
+            'company_phone' => env('COMPANY_PHONE', 'Company Phone'),
         ];
 
         $pdf = Pdf::loadView('register-invoice', $data);

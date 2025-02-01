@@ -93,18 +93,18 @@
 </p>
 <p style="margin-bottom:0pt; text-align:center; line-height:12pt">
     <strong><span
-            style="font-family:'Times New Roman'; font-size:10pt; ">DUSHI RENT A CAR SH.P.K.</span></strong><strong><span
-            style="font-family:'Times New Roman'; font-size:10pt; color:#222222">(812112150) Rr. Hasan Prishtina pn., Ferizaj pn.</span></strong><strong><span
+            style="font-family:'Times New Roman'; font-size:10pt; ">{{ $company_name ?? '' }}</span></strong><strong><span
+            style="font-family:'Times New Roman'; font-size:10pt; color:#222222">(812112150) {{ $company_address ?? ''}}</span></strong><strong><span
             style="font-family:'Times New Roman'; font-size:10pt; color:#222222">&#xa0; </span></strong><strong><span
-            style="font-family:'Times New Roman'; font-size:10pt; color:#222222">Tel/ + 383 48 343 232</span></strong>
+            style="font-family:'Times New Roman'; font-size:10pt; color:#222222">Tel/ {{ $company_phone ?? ''}}</span></strong>
 </p>
 <p style="margin-bottom:0pt; text-align:center; line-height:12pt">
-    <strong><span style="font-family:'Times New Roman'; font-size:10pt; color:#222222">Kontratë për automjet ndërmjet subjektit DUSHI RENT A CAR</span></strong><strong><span
+    <strong><span style="font-family:'Times New Roman'; font-size:10pt; color:#222222">Kontratë për automjet ndërmjet subjektit {{ $company_name ?? '' }}</span></strong><strong><span
             style="font-family:'Times New Roman'; font-size:10pt; "> SH.P.K.</span></strong><strong><span
             style="font-family:'Times New Roman'; font-size:10pt; color:#222222"> dhe klientit.</span></strong>
 </p>
 <p style="margin-bottom:0pt; text-align:center; line-height:12pt">
-    <strong><span style="font-family:'Times New Roman'; font-size:10pt; color:#222222">Rent a car contract between the owner of DUSHI RENT A CAR</span></strong><strong><span
+    <strong><span style="font-family:'Times New Roman'; font-size:10pt; color:#222222">Rent a car contract between the owner of {{ $company_name ?? '' }}</span></strong><strong><span
             style="font-family:'Times New Roman'; font-size:10pt; "> SH.P.K.</span></strong><strong><span
             style="font-family:'Times New Roman'; font-size:10pt; color:#222222"> and the client.</span></strong>
 </p>
@@ -350,11 +350,11 @@
 </p>
 <p class="NoSpacing" style="font-size:9pt">
     <strong><span style="font-family:'Times New Roman'; ">Me këtë autorizim</span></strong><span
-        style="font-family:'Times New Roman'">: I lejohet klientit të ngasë makinën brenda dhe jashte shtetit në bazë të kushteve të caktuar, klienti nuk ka të drejtë mjetin e marre me qera ta jep nën qeramarrje apo shitje e as ti lejohet personit tjeter ta ngase mjetin perveq personit qe i është lëshuar kontrata nga DUSHI RENT A CAR SH.P.K. dhe çdo shkelje ligjore e mundshme, pergjegjsine e merr vetë klienti.</span>
+        style="font-family:'Times New Roman'">: I lejohet klientit të ngasë makinën brenda dhe jashte shtetit në bazë të kushteve të caktuar, klienti nuk ka të drejtë mjetin e marre me qera ta jep nën qeramarrje apo shitje e as ti lejohet personit tjeter ta ngase mjetin perveq personit qe i është lëshuar kontrata nga {{ $company_name ?? '' }} dhe çdo shkelje ligjore e mundshme, pergjegjsine e merr vetë klienti.</span>
 </p>
 <p class="NoSpacing" style="font-size:9pt">
     <strong><span style="font-family:'Times New Roman'; ">With this authorization</span></strong><span
-        style="font-family:'Times New Roman'"> the client is allowed to drive the car inside and ouotside country based on certain conditions, the client has no right to rent or sell the rented vehicle nor to allow the other person to drive the car except the person to whom the contract has been issued by DUSHI RENT A CAR SH.P.K.</span><span
+        style="font-family:'Times New Roman'"> the client is allowed to drive the car inside and ouotside country based on certain conditions, the client has no right to rent or sell the rented vehicle nor to allow the other person to drive the car except the person to whom the contract has been issued by {{ $company_name ?? '' }}</span><span
         style="font-family:'Times New Roman'">&#xa0; </span><span style="font-family:'Times New Roman'">and any possible legal violations, the client takes responsibility himself. </span>
 </p>
 <p class="NoSpacing" style="font-size:9pt">

@@ -26,6 +26,8 @@
     "no-data-found": "Nuk u gjet asnjë e dhënë",
     "no": "Jo",
     "yes": "Po",
+    "view-car": "Shiko Veturën",
+    "close": "Mbylle",
     "success": "Sukses",
     "delete-success": "U fshi me sukses",
     "add-success": "U shtua me sukses",
@@ -57,7 +59,8 @@
     "validation": {
         "required": "Fusha '{field}' është e detyrueshme",
         "email": "Email adresa nuk është e vlefshme",
-        "min": "Minimum {min} karaktere janë të detyrueshme"
+        "min": "Minimum {min} karaktere janë të detyrueshme",
+        "must_be_a_number": "Fusha '{field}' duhet te jete numêr"
     },
     "warn-registration": "{control-type} skadon brenda kesaj jave",
     "success-registration": "{control-type} i veturës është Aktiv",
@@ -85,6 +88,7 @@
     "count_today": "Numëro Sot",
     "dates": "Datat",
     "fuel_status": "Statusi i karburantit",
+    "fuel": "Karburanti",
     "total_price": "Çmimi total",
     "set-dates": "Zgjedh Datat",
     "select-car": "Zgjedh veturën",
@@ -99,5 +103,10 @@
     "recent-registers": "Kontratat e fundit",
     "not-found": "Nuk u gjet",
     "not-available": "Faqja që kërkoni nuk është në dispozicion.",
-    "go-to": "Shko tek"
+    "go-to": "Shko tek",
+    "edit": "Ndrysho",
+    "delete": "Fshij",
+    "view-register": "Shiko Kontratën",
+    "view": "Shiko",
+    "print": "Printo Kontratën"
 }

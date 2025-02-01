@@ -16,7 +16,7 @@ export function usePageTitle() {
     watch(
         pageTitle,
         (newTitle) => {
-            document.title = `${newTitle} | Rent a Car Dushi`;
+            document.title = `${newTitle} | ${import.meta.env.VITE_APP_NAME ?? "Rent a Car"}`;
         },
         { immediate: true },
     );

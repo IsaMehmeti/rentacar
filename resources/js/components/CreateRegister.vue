@@ -1,7 +1,7 @@
 <script setup>
 import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
 import { useI18n } from "vue-i18n";
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { ClientService } from "@/service/api/ClientService.js";
 import { useMutation, useQuery } from "@tanstack/vue-query";
 import { CarService } from "@/service/api/CarService.js";
@@ -21,12 +21,41 @@ const props = defineProps({
 const emit = defineEmits(["update:visible", "save"]);
 const clientCreateForm = ref(null);
 const filteredClients = ref([]);
+const carRegisters = ref(undefined);
+const isLoading = ref(false);
 
 const register = ref({
     client: {},
     days: 0,
     count_today: true,
 });
+
+const allDisabledDates = ref([]);
+
+const getDateClass = (dateObj) => {
+    const currentDate = new Date(dateObj.year, dateObj.month, dateObj.day);
+    currentDate.setHours(0, 0, 0, 0); // Normalize the time for comparison
+
+    if (!carRegisters.value) {
+        return "";
+    }
+
+    for (const register of carRegisters.value) {
+        const startDate = moment(register.start_date, "DD-MM-YYYY").toDate();
+        const endDate = moment(register.end_date, "DD-MM-YYYY").toDate();
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(0, 0, 0, 0);
+
+        if (currentDate.getTime() === startDate.getTime()) {
+            return "disabled p-datepicker-day p-datepicker-day-selected"; // Class for the start date
+        } else if (currentDate.getTime() === endDate.getTime()) {
+            return "disabled p-datepicker-day p-datepicker-day-selected"; // Class for the end date
+        } else if (currentDate > startDate && currentDate < endDate) {
+            return "disabled p-datepicker-day p-datepicker-day-selected-range"; // Class for dates between start and end
+        }
+    }
+    return ""; // Default class if no conditions are met
+};
 
 const internalVisible = ref(props.visible);
 //search client
@@ -62,6 +91,33 @@ const {
     queryFn: async () => (await CarService.list()).data,
 });
 
+// list car registers
+const {
+    mutate: carRegistersMutation,
+    isPending: loadingCarRegisters,
+    data: carRegistersData,
+    isError: isErrorCarRegisters,
+    error: errorCarRegisters,
+} = useMutation({
+    queryKey: ["cars-registers"],
+    mutationFn: async (car) => {
+        allDisabledDates.value = [];
+        const data = await CarService.registers(car.id);
+        data.data.forEach((register) => {
+            const start = moment(register.start_date, "DD-MM-YYYY").toDate();
+            const end = moment(register.end_date, "DD-MM-YYYY").toDate();
+
+            let currentDate = new Date(start.getTime());
+            while (currentDate <= end) {
+                allDisabledDates.value.push(new Date(currentDate));
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+        });
+        carRegisters.value = data.data;
+        return data.data;
+    },
+});
+
 // create register
 const {
     mutate: createNewRegister,
@@ -72,6 +128,8 @@ const {
     cacheTime: 0,
     staleTime: 0,
     mutationFn: async () => {
+        isLoading.value = true;
+
         register.value.start_date = register.value.dates[0];
         register.value.end_date = register.value.dates[1];
         return await RegisterService.store(register.value);
@@ -80,6 +138,7 @@ const {
         console.log(error);
     },
     onSuccess: (data) => {
+        isLoading.value = false;
         emit("save");
         handleClose();
         const blob = new Blob([data.data], { type: "application/pdf" });
@@ -126,11 +185,17 @@ const handleClose = () => {
         days: 0,
         count_today: true,
     };
+    carRegisters.value = undefined;
     internalVisible.value = false;
 };
 
 const handleSearchClient = (e) => {
     searchClient(e.query);
+};
+
+const handleCarSelection = (car) => {
+    register.value.dates = null;
+    carRegistersMutation(car);
 };
 
 const handleSelectClient = (selectedClient) => {
@@ -202,9 +267,21 @@ watch(
         :visible="internalVisible"
         :dismissableMask="true"
         :modal="true"
-        :style="{ width: '600px' }"
+        :style="{ width: '700px' }"
         @update:visible="handleClose"
     >
+        <div
+            v-if="loadingCarRegisters || isSearching || isLoading"
+            class="spinner-overlay"
+        >
+            <ProgressSpinner
+                style="width: 50px; height: 50px"
+                strokeWidth="8"
+                fill="transparent"
+                animationDuration=".5s"
+                aria-label="Custom ProgressSpinner"
+            />
+        </div>
         <template #header>
             <div class="flex justify-between items-center w-full">
                 <span class="text-xl font-bold">{{ t("add-contract") }}</span>
@@ -395,8 +472,8 @@ watch(
             <!--    Rest   -->
             <hr class="mt-5 mb-5" />
             <div class="flex flex-col gap-6">
-                <div class="grid grid-cols-12 gap-4">
-                    <div class="col-span-6">
+                <div class="grid grid-cols-12">
+                    <div class="col-span-10 col-start-2">
                         <Label for="car" required>{{ t("the-car") }}</Label>
                         <Field
                             v-slot="{ values, errorMessage }"
@@ -410,10 +487,13 @@ watch(
                                 class="w-full"
                                 :optionLabel="
                                     (car) =>
-                                        `${car.model} ${car.color} - ${car.marsh}`
+                                        `${car.model} ${car.color} - ${car.marsh} (${car.fuel}) - ${car.target}`
                                 "
                                 :placeholder="t('select-car')"
+                                @update:modelValue="handleCarSelection"
+                                :loading="loadingCarRegisters"
                                 :invalid="!!errorMessage"
+                                :filter="true"
                             />
                             <ErrorMessage
                                 class="text-red-500 text-m mt-2"
@@ -421,30 +501,14 @@ watch(
                             />
                         </Field>
                     </div>
-                    <div class="col-span-6">
-                        <Label for="fuel_status">{{ t("fuel_status") }}</Label>
-                        <Field
-                            v-slot="{ values, errorMessage }"
-                            v-model="register.fuel_status"
-                            :validateOnChange="true"
-                            name="color"
-                        >
-                            <InputText
-                                id="color"
-                                v-model="register.fuel_status"
-                                :invalid="!!errorMessage"
-                                :placeholder="t('fuel_status')"
-                                class="w-full"
-                            />
-                            <ErrorMessage
-                                class="text-red-500 text-m mt-2"
-                                name="fuel_status"
-                            />
-                        </Field>
-                    </div>
                 </div>
-                <div class="grid grid-cols-12 gap-4">
-                    <div class="col-span-7">
+
+                <div
+                    v-if="carRegisters"
+                    class="grid grid-cols-12 gap-4"
+                    style="transition: all 0.5s ease"
+                >
+                    <div class="col-span-10 col-start-2">
                         <Label required for="dates">{{ t("dates") }}</Label>
                         <Field
                             v-slot="{ values, errorMessage }"
@@ -455,6 +519,8 @@ watch(
                             <DatePicker
                                 v-model="register.dates"
                                 selectionMode="range"
+                                inline
+                                style="transition: all 0.5s ease"
                                 :manualInput="false"
                                 :showButtonBar="true"
                                 :showIcon="true"
@@ -463,13 +529,27 @@ watch(
                                 @update:modelValue="handleDateChange"
                                 :placeholder="t('set-dates')"
                                 :invalid="!!errorMessage"
-                            />
+                                :disabledDates="allDisabledDates"
+                                :firstDayOfWeek="1"
+                            >
+                                <template #date="{ date }">
+                                    <span
+                                        v-tooltip="t('in-progress')"
+                                        :class="getDateClass(date)"
+                                    >
+                                        {{ date.day }}
+                                    </span>
+                                </template>
+                            </DatePicker>
                             <ErrorMessage
                                 class="text-red-500 text-m mt-2"
                                 name="dates"
                             />
                         </Field>
                     </div>
+                </div>
+
+                <div class="grid grid-cols-12 gap-4">
                     <div class="col-span-2 text-center">
                         <Label for="count_today">{{ t("count_today") }}</Label>
                         <ToggleSwitch
@@ -488,7 +568,7 @@ watch(
                         />
                     </div>
 
-                    <div class="col-span-3">
+                    <div class="col-span-2">
                         <Label for="days">{{ t("days") }}</Label>
                         <Field
                             v-slot="{ values, errorMessage }"
@@ -509,9 +589,7 @@ watch(
                             />
                         </Field>
                     </div>
-                </div>
-                <div class="grid grid-cols-12 gap-4">
-                    <div class="col-span-6">
+                    <div class="col-span-4">
                         <Label required for="price_per_day">{{
                             t("price_per_day")
                         }}</Label>
@@ -535,7 +613,7 @@ watch(
                             />
                         </Field>
                     </div>
-                    <div class="col-span-6">
+                    <div class="col-span-4">
                         <Label required for="total_price">{{
                             t("total_price")
                         }}</Label>
@@ -588,3 +666,23 @@ watch(
         </Message>
     </Dialog>
 </template>
+
+<style scoped>
+.disabled {
+    text-decoration: line-through;
+}
+.loading-overlay {
+    position: relative;
+    filter: blur(2px);
+    opacity: 0.6;
+    pointer-events: none; /* Disable interaction with the content while loading */
+}
+
+.spinner-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+</style>

@@ -418,6 +418,7 @@ function createNewRegister() {
                 <Column :exportable="false" style="min-width: 12rem">
                     <template #body="slotProps">
                         <Button
+                            v-tooltip="t('print')"
                             class="mr-2"
                             icon="pi pi-print"
                             outlined
@@ -426,8 +427,9 @@ function createNewRegister() {
                             @click="handlePrintRegister(slotProps.data)"
                         />
                         <Button
+                            v-tooltip="t('view')"
                             class="mr-2"
-                            icon="pi pi-pencil"
+                            icon="pi pi-eye"
                             outlined
                             rounded
                             @click="
@@ -437,6 +439,7 @@ function createNewRegister() {
                         />
 
                         <Button
+                            v-tooltip="t('delete')"
                             icon="pi pi-trash"
                             outlined
                             rounded
@@ -469,7 +472,7 @@ function createNewRegister() {
             <template #header>
                 <div class="flex justify-between items-center w-full">
                     <span class="text-xl font-bold">{{
-                        t("update-register")
+                        t("view-register")
                     }}</span>
                     <div class="flex items-center gap-2">
                         <LanguageSwitcher />

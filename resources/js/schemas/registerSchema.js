@@ -9,7 +9,8 @@ const createRegisterSchema = (t) => {
     return yup.object({
         price_per_day: yup
             .number()
-            .required(t("validation.required", { field: t("price_per_day") })),
+            .required(t("validation.required", { field: t("price_per_day") }))
+            .typeError(() => t("validation.must_be_a_number", { field: t("price_per_day") })),
         dates: yup
             .array()
             .required(t("validation.required", { field: t("dates") })),

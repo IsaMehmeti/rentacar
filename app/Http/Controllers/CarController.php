@@ -33,6 +33,7 @@ class CarController extends Controller
         $validated = $request->validate([
             'model' => 'required',
             'marsh' => 'sometimes',
+            'fuel' => 'sometimes',
             'production_year' => 'sometimes',
             'target' => 'sometimes',
             'shasi_nr' => 'sometimes|unique:cars',
@@ -65,6 +66,7 @@ class CarController extends Controller
         $validated = $request->validate([
             'model' => 'required',
             'marsh' => 'sometimes',
+            'fuel' => 'sometimes',
             'production_year' => 'sometimes',
             'target' => 'sometimes',
             'shasi_nr' => [
@@ -82,7 +84,7 @@ class CarController extends Controller
                 // Add additional custom messages for other fields as needed
             ]
         );
-        
+
 
         $car->update($validated);
         return response()->json([
@@ -106,6 +108,14 @@ class CarController extends Controller
             "message" => 'U fshi me sukses'
         ]);
     }
+
+    public function registers(Car $car)
+    {
+        return response()->json($car->registers()
+        ->where('start_date', '>=', now()->subMonths(3))
+        ->get());
+    }
+
 
     public function uploadFile($reqFile, $car_id)
     {
