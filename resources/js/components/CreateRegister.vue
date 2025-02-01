@@ -533,10 +533,7 @@ watch(
                                 :firstDayOfWeek="1"
                             >
                                 <template #date="{ date }">
-                                    <span
-                                        v-tooltip="t('in-progress')"
-                                        :class="getDateClass(date)"
-                                    >
+                                    <span :class="getDateClass(date)">
                                         {{ date.day }}
                                     </span>
                                 </template>
